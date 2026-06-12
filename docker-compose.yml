@@ -1,0 +1,95 @@
+version: "3.9"
+
+services:
+  # ─────────── PostgreSQL ───────────
+  db:
+    image: postgres:16-alpine
+    container_name: egram_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: egram
+      POSTGRES_USER: egram
+      POSTGRES_PASSWORD: egram_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U egram"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────── Redis ───────────
+  redis:
+    image: redis:7-alpine
+    container_name: egram_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────── Spring Boot Backend ───────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: egram_backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DB_USERNAME: egram
+      DB_PASSWORD: egram_secret
+      REDIS_HOST: redis
+      JWT_SECRET: change_this_secret_in_production_use_env_file
+      AI_SERVICE_URL: http://ai-service:8001
+      S3_BUCKET: egram-media
+      AWS_REGION: ap-south-1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v3/api-docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─────────── Python FastAPI AI Service ───────────
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: egram_ai
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─────────── React Frontend ───────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: egram_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+      - ai-service
+
+volumes:
+  pgdata:
