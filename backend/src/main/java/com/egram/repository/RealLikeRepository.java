@@ -12,4 +12,5 @@ public interface RealLikeRepository extends JpaRepository<RealLike, RealLikeId> 
     boolean existsByRealIdAndStudentId(UUID realId, UUID studentId);
     void deleteByRealIdAndStudentId(UUID realId, UUID studentId);
     long countByRealId(UUID realId);
+    void deleteByRealId(UUID realId);
 }

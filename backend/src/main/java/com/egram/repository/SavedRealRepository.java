@@ -12,4 +12,5 @@ import java.util.UUID;
 public interface SavedRealRepository extends JpaRepository<SavedReal, SavedRealId> {
     boolean existsByRealIdAndStudentId(UUID realId, UUID studentId);
     void deleteByRealIdAndStudentId(UUID realId, UUID studentId);
+    void deleteByRealId(UUID realId);
 }

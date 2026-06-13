@@ -76,6 +76,9 @@ public class RealService {
         if (!realRepository.existsById(id)) {
             throw new EgramException("Real not found", HttpStatus.NOT_FOUND);
         }
+        realCommentRepository.deleteByRealId(id);
+        realLikeRepository.deleteByRealId(id);
+        savedRealRepository.deleteByRealId(id);
         realRepository.deleteById(id);
     }
 
