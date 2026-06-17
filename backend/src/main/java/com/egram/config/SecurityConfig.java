@@ -80,13 +80,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // CORS: Allow localhost for dev and Vercel domain for production.
-        // TODO: Replace YOUR_VERCEL_APP_NAME with your actual deployment URL
-        configuration.setAllowedOrigins(List.of(
+        // CORS: Allow localhost for dev and dynamic frontend URL from environment
+        String frontendUrl = System.getenv("FRONTEND_URL");
+        List<String> allowedOrigins = new java.util.ArrayList<>(List.of(
             "http://localhost:5173",
             "http://localhost:3000",
-            "https://YOUR_VERCEL_APP_NAME.vercel.app"
+            "https://egram-frontend.vercel.app" // Fallback example
         ));
+        if (frontendUrl != null && !frontendUrl.isBlank()) {
+            allowedOrigins.add(frontendUrl);
+        }
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
