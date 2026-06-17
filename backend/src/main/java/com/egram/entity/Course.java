@@ -31,6 +31,15 @@ public class Course {
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
+    @Column(name = "category")
+    private String category;
+
+    @Column(name = "difficulty")
+    private String difficulty;
+
+    @Column(name = "duration_minutes")
+    private int durationMinutes;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;

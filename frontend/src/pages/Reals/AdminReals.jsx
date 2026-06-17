@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import realService from '../../services/realService';
 
 const AdminReals = () => {
@@ -34,7 +35,7 @@ const AdminReals = () => {
       fetchReals();
     } catch (error) {
       console.error('Failed to upload real', error);
-      alert('Failed to upload real');
+      toast.error('Failed to upload real');
     } finally {
       setLoading(false);
     }
@@ -47,7 +48,7 @@ const AdminReals = () => {
         fetchReals();
       } catch (error) {
         console.error('Failed to delete real', error);
-        alert('Failed to delete real');
+        toast.error('Failed to delete real');
       }
     }
   };

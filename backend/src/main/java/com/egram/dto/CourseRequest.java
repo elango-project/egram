@@ -18,4 +18,10 @@ public class CourseRequest {
     private String description;
 
     private String thumbnailUrl;
+
+    private String category;
+
+    private String difficulty;
+
+    private int durationMinutes;
 }

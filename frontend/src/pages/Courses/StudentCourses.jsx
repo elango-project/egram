@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import courseService from '../../services/courseService';
 
 const StudentCourses = () => {
@@ -26,7 +27,7 @@ const StudentCourses = () => {
     try {
       const detailedCourse = await courseService.getCourseById(id);
       setSelectedCourse(detailedCourse);
-      setProgressInput(detailedCourse.completedModulesCount?.toString() || '0');
+      setProgressInput(detailedCourse.completedModules?.toString() || '0');
     } catch (error) {
       console.error('Failed to fetch course details', error);
     }
@@ -39,19 +40,19 @@ const StudentCourses = () => {
       fetchCourses(); // refresh list
     } catch (error) {
       console.error('Enrollment error', error);
-      alert('Failed to enroll or already enrolled');
+      toast.error('Failed to enroll or already enrolled');
     }
   };
 
-  const handleUpdateProgress = async (e) => {
-    e.preventDefault();
+  const handleCompleteModule = async (newCompletedCount) => {
     try {
-      await courseService.updateProgress(selectedCourse.id, parseInt(progressInput));
+      await courseService.updateProgress(selectedCourse.id, newCompletedCount);
       handleSelectCourse(selectedCourse.id);
       fetchCourses();
+      toast.success('Module marked as complete!');
     } catch (error) {
       console.error('Failed to update progress', error);
-      alert('Failed to update progress');
+      toast.error('Failed to update progress');
     }
   };
 
@@ -62,8 +63,8 @@ const StudentCourses = () => {
   // Details View
   if (selectedCourse) {
     const isEnrolled = selectedCourse.enrolled;
-    const progressPercent = selectedCourse.modules?.length > 0 
-      ? Math.round((selectedCourse.completedModulesCount / selectedCourse.modules.length) * 100) 
+    const progressPercent = selectedCourse.totalModules > 0 
+      ? Math.round((selectedCourse.completedModules / selectedCourse.totalModules) * 100) 
       : 0;
 
     return (
@@ -91,7 +92,25 @@ const StudentCourses = () => {
                 )}
               </div>
               
-              <p className="text-gray-700 mb-6 text-lg">{selectedCourse.description}</p>
+              <p className="text-gray-700 mb-4 text-lg">{selectedCourse.description}</p>
+              
+              <div className="flex flex-wrap gap-3 mb-6">
+                {selectedCourse.category && (
+                  <span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-gray-200">
+                    📂 {selectedCourse.category}
+                  </span>
+                )}
+                {selectedCourse.difficulty && (
+                  <span className="bg-orange-50 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-orange-200">
+                    ⚡ {selectedCourse.difficulty}
+                  </span>
+                )}
+                {selectedCourse.durationMinutes > 0 && (
+                  <span className="bg-blue-50 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-blue-200">
+                    ⏱️ {selectedCourse.durationMinutes} mins
+                  </span>
+                )}
+              </div>
               
               {!isEnrolled ? (
                 <button 
@@ -110,21 +129,22 @@ const StudentCourses = () => {
                     <span className="text-sm font-bold text-blue-900">{progressPercent}%</span>
                   </div>
                   
-                  <form onSubmit={handleUpdateProgress} className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-gray-700">Completed Modules:</label>
-                    <input 
-                      type="number" 
-                      min="0" 
-                      max={selectedCourse.modules?.length || 0}
-                      value={progressInput}
-                      onChange={(e) => setProgressInput(e.target.value)}
-                      className="border border-gray-300 rounded px-2 py-1 w-20 text-center"
-                    />
-                    <span className="text-sm text-gray-500">/ {selectedCourse.modules?.length || 0}</span>
-                    <button type="submit" className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
-                      Update
-                    </button>
-                  </form>
+                  {progressPercent === 100 && (
+                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex justify-between items-center">
+                      <div>
+                        <h4 className="font-bold text-yellow-800 flex items-center gap-2">
+                          🏆 Course Completed!
+                        </h4>
+                        <p className="text-sm text-yellow-700">Congratulations on finishing this course.</p>
+                      </div>
+                      <button 
+                        onClick={() => window.location.href = `/certificate/${selectedCourse.id}`}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded shadow-sm text-sm"
+                      >
+                        View Certificate
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -135,7 +155,7 @@ const StudentCourses = () => {
             <h3 className="text-xl font-bold mb-6">Course Modules</h3>
             <div className="space-y-4">
               {selectedCourse.modules?.map((mod, index) => (
-                <div key={mod.id} className={`flex items-center p-4 rounded-lg border ${isEnrolled && index < selectedCourse.completedModulesCount ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                <div key={mod.id} className={`flex items-center p-4 rounded-lg border ${isEnrolled && index < selectedCourse.completedModules ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center font-bold mr-4">
                     {index + 1}
                   </div>
@@ -143,8 +163,16 @@ const StudentCourses = () => {
                     <h4 className="font-bold text-gray-900">{mod.title}</h4>
                     <span className="text-xs text-gray-500 uppercase tracking-wider">{mod.type}</span>
                   </div>
-                  {isEnrolled && index < selectedCourse.completedModulesCount && (
-                    <div className="text-green-600">✓ Completed</div>
+                  {isEnrolled && index < selectedCourse.completedModules && (
+                    <div className="text-green-600 font-bold text-sm">✓ Completed</div>
+                  )}
+                  {isEnrolled && index === selectedCourse.completedModules && (
+                    <button 
+                      onClick={() => handleCompleteModule(index + 1)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-1 px-3 rounded shadow-sm"
+                    >
+                      Mark Complete
+                    </button>
                   )}
                 </div>
               ))}
@@ -184,11 +212,11 @@ const StudentCourses = () => {
               
               <div className="flex justify-between items-center mb-4">
                 <span className="text-sm font-medium text-gray-500 flex items-center gap-1">
-                  📚 {course.modulesCount} Modules
+                  📚 {course.totalModules} Modules
                 </span>
                 {course.enrolled && (
                   <span className="text-sm font-bold text-blue-600">
-                    {Math.round((course.completedModulesCount / (course.modulesCount || 1)) * 100)}% Complete
+                    {course.totalModules > 0 ? Math.round((course.completedModules / course.totalModules) * 100) : 0}% Complete
                   </span>
                 )}
               </div>

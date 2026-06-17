@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -17,12 +18,22 @@ public class CourseResponse {
     private String title;
     private String description;
     private String thumbnailUrl;
+    private String category;
+    private String difficulty;
+    private int durationMinutes;
     private String createdBy;
     private int totalModules;
+    private int completedModules;
+    
+    // For admins
+    private long enrollmentCount;
+    private double completionRate;
     
     // For students
     private boolean enrolled;
     private int progressPercentage;
+    
+    private List<CourseModuleResponse> modules;
     
     private LocalDateTime createdAt;
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import assessmentService from '../../services/assessmentService';
 
 const AdminAssessments = () => {
@@ -50,7 +51,7 @@ const AdminAssessments = () => {
       fetchAssessments();
     } catch (error) {
       console.error('Failed to create assessment', error);
-      alert('Failed to create assessment');
+      toast.error('Failed to create assessment');
     } finally {
       setLoading(false);
     }
@@ -64,7 +65,7 @@ const AdminAssessments = () => {
         if (selectedAssessment?.id === id) setSelectedAssessment(null);
       } catch (error) {
         console.error('Failed to delete assessment', error);
-        alert('Failed to delete assessment');
+        toast.error('Failed to delete assessment');
       }
     }
   };
@@ -102,7 +103,7 @@ const AdminAssessments = () => {
       fetchAssessments(); // refresh counts
     } catch (error) {
       console.error('Failed to add question', error);
-      alert('Failed to add question');
+      toast.error('Failed to add question');
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,7 @@ const AdminAssessments = () => {
         fetchAssessments(); // refresh counts
       } catch (error) {
         console.error('Failed to delete question', error);
-        alert('Failed to delete question');
+        toast.error('Failed to delete question');
       }
     }
   };

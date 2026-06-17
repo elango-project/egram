@@ -15,6 +15,7 @@ import RealsPage from '../pages/Reals/RealsPage';
 import VideosPage from '../pages/Videos/VideosPage';
 
 import CoursesPage from '../pages/Courses/CoursesPage';
+import CertificatePage from '../pages/Courses/CertificatePage';
 import AssessmentsPage from '../pages/Assessments/AssessmentsPage';
 import JobsPage from '../pages/Jobs/JobsPage';
 
@@ -37,6 +38,7 @@ const AppRouter = () => {
             <Route path="/dashboard/reals" element={<RealsPage />} />
             <Route path="/dashboard/videos" element={<VideosPage />} />
             <Route path="/dashboard/courses" element={<CoursesPage />} />
+            <Route path="/certificate/:courseId" element={<CertificatePage />} />
             <Route path="/dashboard/assessments" element={<AssessmentsPage />} />
             <Route path="/dashboard/jobs" element={<JobsPage />} />
           </Route>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import courseService from '../../services/courseService';
 
 const AdminCourses = () => {
@@ -10,6 +11,9 @@ const AdminCourses = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [category, setCategory] = useState('');
+  const [difficulty, setDifficulty] = useState('Beginner');
+  const [durationMinutes, setDurationMinutes] = useState(0);
   
   // Form state for Module
   const [moduleTitle, setModuleTitle] = useState('');
@@ -33,14 +37,19 @@ const AdminCourses = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await courseService.createCourse({ title, description, thumbnailUrl });
+      await courseService.createCourse({ 
+        title, description, thumbnailUrl, category, difficulty, durationMinutes 
+      });
       setTitle('');
       setDescription('');
       setThumbnailUrl('');
+      setCategory('');
+      setDifficulty('Beginner');
+      setDurationMinutes(0);
       fetchCourses();
     } catch (error) {
       console.error('Failed to create course', error);
-      alert('Failed to create course');
+      toast.error('Failed to create course');
     } finally {
       setLoading(false);
     }
@@ -54,7 +63,7 @@ const AdminCourses = () => {
         if (selectedCourse?.id === id) setSelectedCourse(null);
       } catch (error) {
         console.error('Failed to delete course', error);
-        alert('Failed to delete course');
+        toast.error('Failed to delete course');
       }
     }
   };
@@ -84,7 +93,7 @@ const AdminCourses = () => {
       fetchCourses(); // refresh counts
     } catch (error) {
       console.error('Failed to add module', error);
-      alert('Failed to add module');
+      toast.error('Failed to add module');
     } finally {
       setLoading(false);
     }
@@ -98,7 +107,7 @@ const AdminCourses = () => {
         fetchCourses(); // refresh counts
       } catch (error) {
         console.error('Failed to delete module', error);
-        alert('Failed to delete module');
+        toast.error('Failed to delete module');
       }
     }
   };
@@ -129,6 +138,35 @@ const AdminCourses = () => {
                 onChange={e => setThumbnailUrl(e.target.value)}
                 className="w-full border border-gray-300 rounded px-3 py-2"
               />
+                <div className="grid grid-cols-2 gap-4">
+                  <input 
+                    type="text" 
+                    placeholder="Category" 
+                    value={category} 
+                    onChange={e => setCategory(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2"
+                  />
+                  <select
+                    value={difficulty}
+                    onChange={e => setDifficulty(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 bg-white"
+                  >
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-600">Duration (mins):</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    placeholder="Duration in mins" 
+                    value={durationMinutes} 
+                    onChange={e => setDurationMinutes(parseInt(e.target.value) || 0)}
+                    className="flex-1 border border-gray-300 rounded px-3 py-2"
+                  />
+                </div>
               <textarea 
                 placeholder="Description" 
                 value={description} 
@@ -152,9 +190,13 @@ const AdminCourses = () => {
             <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
               {courses.map(course => (
                 <li key={course.id} className="p-4 hover:bg-gray-50 cursor-pointer flex justify-between items-center" onClick={() => handleSelectCourse(course)}>
-                  <div>
+                  <div className="flex-1">
                     <h4 className="font-bold text-gray-900">{course.title}</h4>
-                    <p className="text-sm text-gray-500">{course.modulesCount} Modules</p>
+                    <p className="text-sm text-gray-500">
+                      {course.totalModules} Modules • 
+                      👥 {course.enrollmentCount || 0} Enrolled • 
+                      📈 {course.completionRate || 0}% Completion
+                    </p>
                   </div>
                   <button 
                     onClick={(e) => { e.stopPropagation(); handleDeleteCourse(course.id); }}

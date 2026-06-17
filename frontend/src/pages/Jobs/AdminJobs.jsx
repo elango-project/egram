@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import jobService from '../../services/jobService';
 
 const AdminJobs = () => {
@@ -66,7 +67,7 @@ const AdminJobs = () => {
       fetchJobs();
     } catch (error) {
       console.error('Failed to save job', error);
-      alert('Failed to save job');
+      toast.error('Failed to save job');
     } finally {
       setLoading(false);
     }
@@ -79,7 +80,7 @@ const AdminJobs = () => {
         fetchJobs();
       } catch (error) {
         console.error('Failed to delete job', error);
-        alert('Failed to delete job');
+        toast.error('Failed to delete job');
       }
     }
   };

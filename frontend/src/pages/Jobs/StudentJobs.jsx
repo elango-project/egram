@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import jobService from '../../services/jobService';
 
 const StudentJobs = () => {
@@ -52,7 +53,7 @@ const StudentJobs = () => {
       if (selectedJob && selectedJob.id === id) handleSelectJob(id);
     } catch (error) {
       console.error('Failed to save', error);
-      alert('Already saved or error occurred.');
+      toast.error('Already saved or error occurred.');
     }
   };
 
@@ -74,7 +75,7 @@ const StudentJobs = () => {
       if (selectedJob && selectedJob.id === id) handleSelectJob(id);
     } catch (error) {
       console.error('Failed to apply', error);
-      alert('Already applied or error occurred.');
+      toast.error('Already applied or error occurred.');
     }
   };
 

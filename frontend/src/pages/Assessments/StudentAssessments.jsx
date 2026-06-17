@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import assessmentService from '../../services/assessmentService';
 
 const StudentAssessments = () => {
@@ -38,7 +39,7 @@ const StudentAssessments = () => {
       setLoading(true);
       const qList = await assessmentService.getAssessmentQuestions(assessment.id);
       if (!qList || qList.length === 0) {
-        alert('This assessment has no questions yet.');
+        toast.error('This assessment has no questions yet.');
         return;
       }
       setActiveAssessment(assessment);
@@ -48,7 +49,7 @@ const StudentAssessments = () => {
       setViewState('wizard');
     } catch (error) {
       console.error('Failed to start assessment', error);
-      alert('Failed to load questions.');
+      toast.error('Failed to load questions.');
     } finally {
       setLoading(false);
     }
@@ -62,7 +63,7 @@ const StudentAssessments = () => {
       setViewState('result');
     } catch (error) {
       console.error('Failed to fetch result', error);
-      alert('Result not found or not taken yet.');
+      toast.error('Result not found or not taken yet.');
     } finally {
       setLoading(false);
     }
@@ -89,7 +90,7 @@ const StudentAssessments = () => {
       setViewState('result');
     } catch (error) {
       console.error('Submit error', error);
-      alert('Failed to submit assessment.');
+      toast.error('Failed to submit assessment.');
     } finally {
       setSubmitting(false);
     }

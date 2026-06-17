@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import videoService from '../../services/videoService';
 
 const AdminVideos = () => {
@@ -34,7 +35,7 @@ const AdminVideos = () => {
       fetchVideos();
     } catch (error) {
       console.error('Failed to upload video', error);
-      alert('Failed to upload video');
+      toast.error('Failed to upload video');
     } finally {
       setLoading(false);
     }
@@ -47,7 +48,7 @@ const AdminVideos = () => {
         fetchVideos();
       } catch (error) {
         console.error('Failed to delete video', error);
-        alert('Failed to delete video');
+        toast.error('Failed to delete video');
       }
     }
   };

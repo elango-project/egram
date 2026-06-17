@@ -22,7 +22,16 @@ export default function Login() {
       toast.success(`Welcome back, ${user.firstName}!`)
       navigate('/dashboard')
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Login failed')
+      const data = err.response?.data
+      let errorMsg = 'Login failed'
+      if (data?.validationErrors && Object.keys(data.validationErrors).length > 0) {
+        errorMsg = Object.values(data.validationErrors)[0]
+      } else if (data?.message) {
+        errorMsg = data.message
+      } else if (data?.error) {
+        errorMsg = data.error
+      }
+      toast.error(errorMsg)
     } finally {
       setLoading(false)
     }

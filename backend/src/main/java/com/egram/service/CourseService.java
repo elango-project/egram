@@ -41,6 +41,9 @@ public class CourseService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .thumbnailUrl(request.getThumbnailUrl())
+                .category(request.getCategory())
+                .difficulty(request.getDifficulty())
+                .durationMinutes(request.getDurationMinutes())
                 .createdBy(admin)
                 .build();
         
@@ -54,6 +57,9 @@ public class CourseService {
         course.setTitle(request.getTitle());
         course.setDescription(request.getDescription());
         course.setThumbnailUrl(request.getThumbnailUrl());
+        course.setCategory(request.getCategory());
+        course.setDifficulty(request.getDifficulty());
+        course.setDurationMinutes(request.getDurationMinutes());
         course = courseRepository.save(course);
         return mapToResponse(course, getCurrentUser());
     }
@@ -164,27 +170,56 @@ public class CourseService {
         
         boolean isEnrolled = false;
         int progressPercentage = 0;
+        int completedModules = 0;
+        long enrollmentCount = 0;
+        double completionRate = 0.0;
         
         if ("STUDENT".equals(currentUser.getRole().name())) {
             Optional<CourseEnrollment> enrollment = courseEnrollmentRepository.findByCourseIdAndStudentId(course.getId(), currentUser.getId());
             if (enrollment.isPresent()) {
                 isEnrolled = true;
-                int completed = enrollment.get().getCompletedModules();
+                completedModules = enrollment.get().getCompletedModules();
                 if (totalModules > 0) {
-                    progressPercentage = (int) (((double) completed / totalModules) * 100);
+                    progressPercentage = (int) (((double) completedModules / totalModules) * 100);
                 }
             }
+        } else if ("ADMIN".equals(currentUser.getRole().name())) {
+            List<CourseEnrollment> allEnrollments = courseEnrollmentRepository.findByCourseId(course.getId());
+            enrollmentCount = allEnrollments.size();
+            if (enrollmentCount > 0 && totalModules > 0) {
+                long completedCount = allEnrollments.stream()
+                        .filter(e -> e.getCompletedModules() >= totalModules)
+                        .count();
+                completionRate = Math.round(((double) completedCount / enrollmentCount) * 100.0);
+            }
         }
+
+        List<CourseModuleResponse> modules = course.getModules().stream()
+                .map(m -> CourseModuleResponse.builder()
+                        .id(m.getId())
+                        .title(m.getTitle())
+                        .moduleOrder(m.getModuleOrder())
+                        .realId(m.getRealId())
+                        .longFormVideoId(m.getLongFormVideoId())
+                        .build())
+                .collect(Collectors.toList());
 
         return CourseResponse.builder()
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(course.getDescription())
                 .thumbnailUrl(course.getThumbnailUrl())
+                .category(course.getCategory())
+                .difficulty(course.getDifficulty())
+                .durationMinutes(course.getDurationMinutes())
                 .createdBy(course.getCreatedBy().getFullName())
                 .totalModules(totalModules)
+                .completedModules(completedModules)
+                .enrollmentCount(enrollmentCount)
+                .completionRate(completionRate)
                 .enrolled(isEnrolled)
                 .progressPercentage(progressPercentage)
+                .modules(modules)
                 .createdAt(course.getCreatedAt())
                 .build();
     }

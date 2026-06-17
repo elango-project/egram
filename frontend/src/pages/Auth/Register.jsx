@@ -20,13 +20,25 @@ export default function Register() {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await authApi.register(form)
-      const { accessToken, refreshToken, user } = res.data.data
-      setAuth({ user, accessToken, refreshToken })
-      toast.success(`Welcome to Egram, ${user.firstName}!`)
-      navigate('/dashboard')
+      const payload = {
+        fullName: `${form.firstName} ${form.lastName}`.trim(),
+        email: form.email,
+        password: form.password
+      }
+      await authApi.register(payload)
+      toast.success('Registration successful! Please sign in.')
+      navigate('/login')
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Registration failed')
+      const data = err.response?.data
+      let errorMsg = 'Registration failed'
+      if (data?.validationErrors && Object.keys(data.validationErrors).length > 0) {
+        errorMsg = Object.values(data.validationErrors)[0]
+      } else if (data?.message) {
+        errorMsg = data.message
+      } else if (data?.error) {
+        errorMsg = data.error
+      }
+      toast.error(errorMsg)
     } finally {
       setLoading(false)
     }

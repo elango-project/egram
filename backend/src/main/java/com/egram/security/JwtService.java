@@ -25,7 +25,10 @@ public class JwtService {
     private long expirationMs;
 
     public String generateToken(UserDetails userDetails) {
+        var claims = Jwts.claims().subject(userDetails.getUsername()).build();
         return Jwts.builder()
+                .claims(claims)
+                .claim("roles", userDetails.getAuthorities().stream().map(a -> a.getAuthority()).toList())
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))

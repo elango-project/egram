@@ -1,183 +1,91 @@
-# Educationgram (Egram)
+# Egram MVP - AI Learning Platform
 
-> **AI-powered Academia-Industry Ecosystem** — a portfolio-grade full-stack MVP combining learning, mentorship, internships, AI guidance, and event discovery.
+Egram is an AI-powered learning ecosystem built with a robust Spring Boot 3 backend and a responsive React frontend.
 
----
+## Features
+- **Role-Based Access**: Secure login/registration for `STUDENT` and `ADMIN` roles using JWT.
+- **Reals**: Short-form educational video content with likes, saves, and comments.
+- **Videos**: Long-form structured video content.
+- **Courses**: Modular courses with enrollments and progress tracking.
+- **Assessments**: Timed quizzes with automated scoring.
+- **Jobs & Internships**: Browse and apply for opportunities.
 
-## 🏗️ Architecture
+## Tech Stack
+- **Backend**: Java 21, Spring Boot 3.3.0, Spring Security (JWT), Spring Data JPA.
+- **Database**: PostgreSQL (Neon Serverless DB).
+- **Frontend**: React 18, Vite, Tailwind CSS, React Router, Axios, React Hot Toast.
 
-```
-React + Tailwind  →  Spring Boot REST API  →  PostgreSQL
-                            ↓
-                   Python FastAPI (Gemini AI)
-                            ↓
-                          Redis
-```
+## Local Setup
 
-## 🚀 Tech Stack
+### Database (Neon Setup)
+1. Create a free PostgreSQL database on [Neon.tech](https://neon.tech).
+2. Copy the connection string.
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 19, Tailwind CSS v4, Vite |
-| Backend | Java 21, Spring Boot 3.3, Spring Security |
-| Auth | JWT (jjwt 0.12), BCrypt |
-| Database | PostgreSQL 16 |
-| Cache | Redis 7 |
-| AI Service | Python 3.13, FastAPI, Google Gemini API |
-| PDF | ReportLab |
-| QR Code | ZXing (Java) |
-| Container | Docker Compose |
+### Backend Setup
+1. Navigate to the `backend` directory.
+2. In `src/main/resources/application.properties`, update the database credentials:
+   ```properties
+   spring.datasource.url=jdbc:postgresql://<NEON_URL>?sslmode=require
+   spring.datasource.username=<YOUR_USERNAME>
+   spring.datasource.password=<YOUR_PASSWORD>
+   jwt.secret=<YOUR_256_BIT_SECRET_KEY>
+   ```
+3. Run `mvn clean compile` then start the application using `mvn spring-boot:run`. The backend runs on `http://localhost:8080`.
 
----
-
-## 📁 Project Structure
-
-```
-egram/
-├── backend/          # Spring Boot REST API
-│   └── src/main/java/com/egram/
-│       ├── auth/         # JWT auth (register, login, refresh)
-│       ├── user/         # User profiles & roles
-│       ├── course/       # Courses, modules, videos, enrollment
-│       ├── reel/         # Educational reels
-│       ├── internship/   # Internship & job portal
-│       ├── event/        # Event hub
-│       ├── mentor/       # Mentor marketplace
-│       ├── creator/      # Verified creator ecosystem
-│       ├── certificate/  # QR + SHA-256 verification
-│       ├── skill/        # Skill passport & analytics
-│       ├── project/      # Project showcase
-│       ├── parent/       # Parent dashboard
-│       └── config/       # Security, OpenAPI, JPA
-│
-├── ai-service/       # Python FastAPI AI microservice
-│   └── app/
-│       ├── routers/
-│       │   ├── mentor.py   # Sarathi AI Mentor
-│       │   ├── video.py    # Video Summary & Q&A
-│       │   └── resume.py   # AI Resume Builder
-│       └── gemini_client.py
-│
-├── frontend/         # React + Tailwind SPA
-│   └── src/
-│       ├── pages/    # All page components
-│       ├── components/ # Layout, common components
-│       ├── api/      # Axios client
-│       └── store/    # Zustand state
-│
-├── docker-compose.yml
-└── .env.example
-```
+### Frontend Setup
+1. Navigate to the `frontend` directory.
+2. Create a `.env` file:
+   ```env
+   VITE_API_BASE_URL=http://localhost:8080/api
+   ```
+3. Run `npm install`.
+4. Run `npm run dev`. The frontend runs on `http://localhost:5173`.
 
 ---
 
-## ⚡ Quick Start
+## Deployment Configuration & Checklists
 
-### Prerequisites
-- Java 21, Maven 3.9
-- Node.js 18+
-- Python 3.13
-- Docker Desktop
+### Backend (Render Deployment)
+To deploy the Spring Boot backend on Render:
+1. Create a **Web Service** on Render connected to your repository.
+2. Build Command: `./mvnw clean package -DskipTests`
+3. Start Command: `java -jar target/egram-backend-1.0.0-SNAPSHOT.jar`
+4. Set the following **Environment Variables**:
+   - `DB_URL` = `jdbc:postgresql://<NEON_HOST>/<DB_NAME>?sslmode=require`
+   - `DB_USERNAME` = `your_neon_username`
+   - `DB_PASSWORD` = `your_neon_password`
+   - `JWT_SECRET` = `your_generated_jwt_secret`
+5. **Important**: Once deployed, copy your Render URL (e.g., `https://egram-api.onrender.com`).
 
-### 1. Clone & Setup Environment
-```bash
-git clone https://github.com/your-username/egram.git
-cd egram
-cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
-```
-
-### 2. Start with Docker Compose
-```bash
-docker-compose up --build
-```
-
-| Service | URL |
-|---|---|
-| Frontend | http://localhost:3000 |
-| Backend API | http://localhost:8080/api |
-| Swagger UI | http://localhost:8080/api/swagger-ui.html |
-| AI Service | http://localhost:8001 |
-| AI Docs | http://localhost:8001/docs |
-
-### 3. Run Locally (Dev Mode)
-
-**Backend:**
-```bash
-cd backend
-mvn spring-boot:run
-```
-
-**AI Service:**
-```bash
-cd ai-service
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm run dev
-```
+### Frontend (Vercel Deployment)
+To deploy the React application on Vercel:
+1. **Pre-requisite**: In the backend source code (`SecurityConfig.java`), replace `YOUR_VERCEL_APP_NAME` with the exact Vercel domain you intend to use. Commit and push this change so the backend accepts CORS requests from Vercel.
+2. Connect your repository to Vercel and import the `frontend` folder.
+3. Framework Preset: **Vite**
+4. Build Command: `npm run build`
+5. Output Directory: `dist`
+6. Set the following **Environment Variable**:
+   - `VITE_API_BASE_URL` = `https://egram-api.onrender.com/api` (Replace with your actual Render backend URL)
 
 ---
 
-## 🔑 API Endpoints
+## Smoke-Test Checklist
 
-| Method | Path | Description |
-|---|---|---|
-| POST | `/api/auth/register` | Register new user |
-| POST | `/api/auth/login` | Login → JWT |
-| GET  | `/api/users/me` | Current user profile |
-| GET  | `/api/courses` | List courses |
-| POST | `/api/courses/{id}/enroll` | Enroll in course |
-| GET  | `/api/reels` | Reel feed |
-| POST | `/api/ai/mentor` | Sarathi AI chat |
-| POST | `/api/ai/mentor/mock-interview` | Mock interview |
-| POST | `/api/ai/video/summary` | Video summary |
-| POST | `/api/ai/video/qna` | Video Q&A |
-| POST | `/api/ai/resume` | Generate resume |
-| GET  | `/api/internships` | Internship listings |
-| GET  | `/api/events` | Event hub |
-| POST | `/api/creators/apply` | Apply for creator verification |
+After deployment, perform these manual tests to verify everything is working.
 
-Full API docs: `http://localhost:8080/api/swagger-ui.html`
+### Admin Tests
+- [ ] Login as an ADMIN user.
+- [ ] Create a Real (verify thumbnail, url, description).
+- [ ] Create a Long-form Video.
+- [ ] Create a Course and add a Module (linking the created Real or Video).
+- [ ] Create an Assessment and add 2 Questions.
+- [ ] Create a Job posting.
 
----
-
-## 🧩 User Roles
-
-| Role | Description |
-|---|---|
-| `STUDENT` | Learn, apply, use AI features |
-| `MENTOR` | Offer mentorship services |
-| `FACULTY` | Monitor students, verify internships |
-| `PARENT` | View linked student progress |
-| `ADMIN` | Full platform management |
-| `VERIFIED_CREATOR` | Upload courses, reels, workshops |
-
----
-
-## 🤖 AI Features
-
-- **Sarathi AI Mentor** – Career guidance, interview prep, technical Q&A (Gemini)
-- **AI Video Summary** – Instant key takeaways and notes from any video
-- **AI Resume Builder** – ATS-optimised PDF resume generation
-- **AI Mock Interview** – Role-specific interview question generator
-- **AI Event Recommendations** – Smart event suggestions based on skill profile
-
----
-
-## 🛡️ Security
-
-- JWT Bearer tokens (access + refresh)
-- BCrypt password hashing
-- Spring Security role-based access control
-- CORS configured for dev and production
-
----
-
-## 📄 License
-
-MIT
+### Student Tests
+- [ ] Register a new STUDENT account.
+- [ ] Login to the new account.
+- [ ] View the created Real, Like it, and Save it.
+- [ ] View the Long-form Video.
+- [ ] Enroll in the created Course.
+- [ ] Take the Assessment and verify the score calculates correctly.
+- [ ] Apply to the Job posting.
