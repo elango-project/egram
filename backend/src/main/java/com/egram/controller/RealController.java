@@ -40,6 +40,7 @@ public class RealController {
     // --- Student / Shared Endpoints ---
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<com.egram.dto.PageResponse<RealResponse>> getAllReals(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -47,11 +48,13 @@ public class RealController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<RealResponse> getRealById(@PathVariable UUID id) {
         return ResponseEntity.ok(realService.getRealById(id));
     }
 
     @PostMapping("/{id}/view")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> incrementViewCount(@PathVariable UUID id) {
         realService.incrementViewCount(id);
         return ResponseEntity.ok().build();
@@ -94,6 +97,7 @@ public class RealController {
     }
 
     @GetMapping("/{id}/comments")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<CommentResponse>> getComments(@PathVariable UUID id) {
         return ResponseEntity.ok(realService.getComments(id));
     }
