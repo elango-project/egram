@@ -1,9 +1,15 @@
 import axiosInstance from '../api/axiosInstance';
 
 const jobService = {
-  // Student APIs
-  getJobs: async () => {
-    const response = await axiosInstance.get('/jobs');
+  // Shared APIs
+  getJobs: async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.type) params.append('type', filters.type);
+    if (filters.location) params.append('location', filters.location);
+    if (filters.remoteType) params.append('remoteType', filters.remoteType);
+    if (filters.activeOnly !== undefined) params.append('activeOnly', filters.activeOnly);
+
+    const response = await axiosInstance.get(`/jobs?${params.toString()}`);
     return response.data;
   },
 
@@ -12,6 +18,7 @@ const jobService = {
     return response.data;
   },
 
+  // Student APIs
   saveJob: async (id) => {
     const response = await axiosInstance.post(`/jobs/${id}/save`);
     return response.data;
@@ -27,13 +34,13 @@ const jobService = {
     return response.data;
   },
 
-  applyJob: async (id) => {
-    const response = await axiosInstance.post(`/jobs/${id}/apply`);
+  applyJob: async (id, data) => {
+    const response = await axiosInstance.post(`/jobs/${id}/apply`, data);
     return response.data;
   },
 
-  getAppliedJobs: async () => {
-    const response = await axiosInstance.get('/jobs/applied');
+  getMyApplications: async () => {
+    const response = await axiosInstance.get('/jobs/my-applications');
     return response.data;
   },
 
@@ -50,6 +57,16 @@ const jobService = {
 
   deleteJob: async (id) => {
     const response = await axiosInstance.delete(`/jobs/${id}`);
+    return response.data;
+  },
+
+  getJobApplications: async (id) => {
+    const response = await axiosInstance.get(`/jobs/${id}/applications`);
+    return response.data;
+  },
+
+  updateApplicationStatus: async (jobId, studentId, status) => {
+    const response = await axiosInstance.put(`/jobs/${jobId}/applications/${studentId}/status?status=${status}`);
     return response.data;
   }
 };

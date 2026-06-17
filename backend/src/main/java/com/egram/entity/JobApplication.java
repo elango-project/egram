@@ -31,6 +31,17 @@ public class JobApplication {
     @Column(name = "applied_at", nullable = false, updatable = false)
     private LocalDateTime appliedAt;
 
+    @Column(name = "resume_url")
+    private String resumeUrl;
+
+    @Column(name = "cover_letter", columnDefinition = "TEXT")
+    private String coverLetter;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    @Builder.Default
+    private ApplicationStatus status = ApplicationStatus.PENDING;
+
     @PrePersist
     protected void onCreate() {
         appliedAt = LocalDateTime.now();

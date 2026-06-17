@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface JobOpportunityRepository extends JpaRepository<JobOpportunity, UUID> {
     List<JobOpportunity> findByActiveTrueOrderByCreatedAtDesc();
     List<JobOpportunity> findByTypeAndActiveTrueOrderByCreatedAtDesc(String type);
+    List<JobOpportunity> findAllByOrderByCreatedAtDesc();
 }

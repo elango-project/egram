@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -21,6 +22,7 @@ public class JobService {
     private final JobOpportunityRepository jobRepository;
     private final SavedJobRepository savedJobRepository;
     private final JobApplicationRepository applicationRepository;
+    private final UserRepository userRepository;
 
     private User getCurrentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -43,6 +45,11 @@ public class JobService {
                 .description(request.getDescription())
                 .location(request.getLocation())
                 .type(request.getType())
+                .compensation(request.getCompensation())
+                .skillsRequired(request.getSkillsRequired())
+                .companyLogoUrl(request.getCompanyLogoUrl())
+                .remoteType(request.getRemoteType())
+                .expiryDate(request.getExpiryDate())
                 .applyUrl(request.getApplyUrl())
                 .active(request.getActive() != null ? request.getActive() : true)
                 .createdBy(admin)
@@ -61,6 +68,11 @@ public class JobService {
         job.setDescription(request.getDescription());
         job.setLocation(request.getLocation());
         job.setType(request.getType());
+        job.setCompensation(request.getCompensation());
+        job.setSkillsRequired(request.getSkillsRequired());
+        job.setCompanyLogoUrl(request.getCompanyLogoUrl());
+        job.setRemoteType(request.getRemoteType());
+        job.setExpiryDate(request.getExpiryDate());
         job.setApplyUrl(request.getApplyUrl());
         if (request.getActive() != null) {
             job.setActive(request.getActive());
@@ -76,23 +88,69 @@ public class JobService {
             throw new EgramException("Job/Internship not found", HttpStatus.NOT_FOUND);
         }
         
-        // Cascade deletes
         savedJobRepository.deleteByJobId(id);
         applicationRepository.deleteByJobId(id);
         jobRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
+    public List<JobApplicationResponse> getJobApplications(UUID jobId) {
+        if (!jobRepository.existsById(jobId)) {
+            throw new EgramException("Job not found", HttpStatus.NOT_FOUND);
+        }
+        return applicationRepository.findByJobId(jobId).stream()
+                .map(app -> JobApplicationResponse.builder()
+                        .jobId(app.getJob().getId())
+                        .studentId(app.getStudent().getId())
+                        .studentName(app.getStudent().getFullName())
+                        .studentEmail(app.getStudent().getEmail())
+                        .resumeUrl(app.getResumeUrl())
+                        .coverLetter(app.getCoverLetter())
+                        .status(app.getStatus())
+                        .appliedAt(app.getAppliedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void updateApplicationStatus(UUID jobId, UUID studentId, String status) {
+        JobApplicationId id = new JobApplicationId(jobId, studentId);
+        JobApplication app = applicationRepository.findById(id)
+                .orElseThrow(() -> new EgramException("Application not found", HttpStatus.NOT_FOUND));
+        try {
+            app.setStatus(ApplicationStatus.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new EgramException("Invalid status", HttpStatus.BAD_REQUEST);
+        }
+        applicationRepository.save(app);
+    }
+
     // --- Authenticated / Shared ---
 
     @Transactional(readOnly = true)
-    public List<JobResponse> getJobs(String type) {
+    public List<JobResponse> getJobs(String type, String location, String remoteType, Boolean activeOnly) {
         User currentUser = getCurrentUser();
         List<JobOpportunity> jobs;
-        
-        if (type != null && !type.isBlank()) {
-            jobs = jobRepository.findByTypeAndActiveTrueOrderByCreatedAtDesc(type);
+
+        if (Boolean.FALSE.equals(activeOnly) && "ADMIN".equals(currentUser.getRole().name())) {
+            jobs = jobRepository.findAllByOrderByCreatedAtDesc();
         } else {
             jobs = jobRepository.findByActiveTrueOrderByCreatedAtDesc();
+            // Filter out expired jobs automatically
+            LocalDate today = LocalDate.now();
+            jobs = jobs.stream()
+                .filter(job -> job.getExpiryDate() == null || !job.getExpiryDate().isBefore(today))
+                .collect(Collectors.toList());
+        }
+
+        if (type != null && !type.isBlank()) {
+            jobs = jobs.stream().filter(j -> j.getType().equalsIgnoreCase(type)).collect(Collectors.toList());
+        }
+        if (location != null && !location.isBlank()) {
+            jobs = jobs.stream().filter(j -> j.getLocation() != null && j.getLocation().toLowerCase().contains(location.toLowerCase())).collect(Collectors.toList());
+        }
+        if (remoteType != null && !remoteType.isBlank()) {
+            jobs = jobs.stream().filter(j -> j.getRemoteType() != null && j.getRemoteType().equalsIgnoreCase(remoteType)).collect(Collectors.toList());
         }
 
         return jobs.stream()
@@ -134,11 +192,11 @@ public class JobService {
     }
 
     @Transactional
-    public void applyJob(UUID jobId) {
+    public void applyJob(UUID jobId, JobApplicationRequest request) {
         User student = getCurrentUser();
         JobOpportunity job = getJobOrThrow(jobId);
 
-        if (!job.getActive()) {
+        if (!job.getActive() || (job.getExpiryDate() != null && job.getExpiryDate().isBefore(LocalDate.now()))) {
             throw new EgramException("Job is no longer active", HttpStatus.BAD_REQUEST);
         }
 
@@ -149,9 +207,18 @@ public class JobService {
         JobApplication application = JobApplication.builder()
                 .job(job)
                 .student(student)
+                .resumeUrl(request.getResumeUrl())
+                .coverLetter(request.getCoverLetter())
+                .status(ApplicationStatus.PENDING)
                 .build();
 
         applicationRepository.save(application);
+
+        // Update user's resumeUrl if it was empty
+        if (student.getResumeUrl() == null || student.getResumeUrl().isBlank()) {
+            student.setResumeUrl(request.getResumeUrl());
+            userRepository.save(student);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -163,10 +230,18 @@ public class JobService {
     }
 
     @Transactional(readOnly = true)
-    public List<JobResponse> getAppliedJobs() {
+    public List<JobApplicationResponse> getMyApplications() {
         User student = getCurrentUser();
         return applicationRepository.findByStudentId(student.getId()).stream()
-                .map(application -> mapToResponse(application.getJob(), student))
+                .map(app -> JobApplicationResponse.builder()
+                        .jobId(app.getJob().getId())
+                        .studentId(app.getStudent().getId())
+                        .resumeUrl(app.getResumeUrl())
+                        .coverLetter(app.getCoverLetter())
+                        .status(app.getStatus())
+                        .appliedAt(app.getAppliedAt())
+                        .job(mapToResponse(app.getJob(), student))
+                        .build())
                 .collect(Collectors.toList());
     }
 
@@ -175,10 +250,17 @@ public class JobService {
     private JobResponse mapToResponse(JobOpportunity job, User currentUser) {
         boolean isSaved = false;
         boolean isApplied = false;
+        ApplicationStatus appStatus = null;
+        int appCount = applicationRepository.countByJobId(job.getId());
 
         if ("STUDENT".equals(currentUser.getRole().name())) {
             isSaved = savedJobRepository.existsByJobIdAndStudentId(job.getId(), currentUser.getId());
-            isApplied = applicationRepository.existsByJobIdAndStudentId(job.getId(), currentUser.getId());
+            JobApplicationId appId = new JobApplicationId(job.getId(), currentUser.getId());
+            var appOpt = applicationRepository.findById(appId);
+            if (appOpt.isPresent()) {
+                isApplied = true;
+                appStatus = appOpt.get().getStatus();
+            }
         }
 
         return JobResponse.builder()
@@ -188,11 +270,18 @@ public class JobService {
                 .description(job.getDescription())
                 .location(job.getLocation())
                 .type(job.getType())
+                .compensation(job.getCompensation())
+                .skillsRequired(job.getSkillsRequired())
+                .companyLogoUrl(job.getCompanyLogoUrl())
+                .remoteType(job.getRemoteType())
+                .expiryDate(job.getExpiryDate())
                 .applyUrl(job.getApplyUrl())
                 .active(job.getActive())
                 .createdAt(job.getCreatedAt())
+                .applicationCount(appCount)
                 .saved(isSaved)
                 .applied(isApplied)
+                .applicationStatus(appStatus)
                 .build();
     }
 }

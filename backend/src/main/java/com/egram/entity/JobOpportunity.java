@@ -37,6 +37,21 @@ public class JobOpportunity {
     @Column(name = "type", nullable = false)
     private String type; // JOB or INTERNSHIP
 
+    @Column(name = "compensation")
+    private String compensation;
+
+    @Column(name = "skills_required")
+    private String skillsRequired;
+
+    @Column(name = "company_logo_url")
+    private String companyLogoUrl;
+
+    @Column(name = "remote_type")
+    private String remoteType; // REMOTE, HYBRID, ONSITE
+
+    @Column(name = "expiry_date")
+    private java.time.LocalDate expiryDate;
+
     @Column(name = "apply_url")
     private String applyUrl;
 

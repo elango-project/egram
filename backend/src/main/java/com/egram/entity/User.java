@@ -39,6 +39,9 @@ public class User implements UserDetails {
     @Builder.Default
     private Role role = Role.STUDENT;
 
+    @Column(name = "resume_url")
+    private String resumeUrl;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

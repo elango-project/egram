@@ -12,5 +12,7 @@ import java.util.UUID;
 public interface JobApplicationRepository extends JpaRepository<JobApplication, JobApplicationId> {
     boolean existsByJobIdAndStudentId(UUID jobId, UUID studentId);
     List<JobApplication> findByStudentId(UUID studentId);
+    List<JobApplication> findByJobId(UUID jobId);
+    int countByJobId(UUID jobId);
     void deleteByJobId(UUID jobId);
 }

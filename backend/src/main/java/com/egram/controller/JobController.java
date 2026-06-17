@@ -43,12 +43,32 @@ public class JobController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{id}/applications")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<com.egram.dto.JobApplicationResponse>> getJobApplications(@PathVariable UUID id) {
+        return ResponseEntity.ok(jobService.getJobApplications(id));
+    }
+
+    @PutMapping("/{jobId}/applications/{studentId}/status")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> updateApplicationStatus(
+            @PathVariable UUID jobId,
+            @PathVariable UUID studentId,
+            @RequestParam String status) {
+        jobService.updateApplicationStatus(jobId, studentId, status);
+        return ResponseEntity.ok().build();
+    }
+
     // --- Authenticated / Shared Endpoints ---
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<JobResponse>> getJobs(@RequestParam(required = false) String type) {
-        return ResponseEntity.ok(jobService.getJobs(type));
+    public ResponseEntity<List<JobResponse>> getJobs(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String remoteType,
+            @RequestParam(required = false, defaultValue = "true") Boolean activeOnly) {
+        return ResponseEntity.ok(jobService.getJobs(type, location, remoteType, activeOnly));
     }
 
     @GetMapping("/{id}")
@@ -75,8 +95,10 @@ public class JobController {
 
     @PostMapping("/{id}/apply")
     @PreAuthorize("hasAuthority('ROLE_STUDENT')")
-    public ResponseEntity<Void> applyJob(@PathVariable UUID id) {
-        jobService.applyJob(id);
+    public ResponseEntity<Void> applyJob(
+            @PathVariable UUID id,
+            @Valid @RequestBody com.egram.dto.JobApplicationRequest request) {
+        jobService.applyJob(id, request);
         return ResponseEntity.ok().build();
     }
 
@@ -86,9 +108,9 @@ public class JobController {
         return ResponseEntity.ok(jobService.getSavedJobs());
     }
 
-    @GetMapping("/applied")
+    @GetMapping("/my-applications")
     @PreAuthorize("hasAuthority('ROLE_STUDENT')")
-    public ResponseEntity<List<JobResponse>> getAppliedJobs() {
-        return ResponseEntity.ok(jobService.getAppliedJobs());
+    public ResponseEntity<List<com.egram.dto.JobApplicationResponse>> getMyApplications() {
+        return ResponseEntity.ok(jobService.getMyApplications());
     }
 }

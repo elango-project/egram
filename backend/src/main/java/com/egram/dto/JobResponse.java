@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.egram.entity.ApplicationStatus;
 
 @Data
 @Builder
@@ -23,7 +24,16 @@ public class JobResponse {
     private Boolean active;
     private LocalDateTime createdAt;
     
+    // Phase 11E fields
+    private String compensation;
+    private String skillsRequired;
+    private String companyLogoUrl;
+    private String remoteType;
+    private java.time.LocalDate expiryDate;
+    private Integer applicationCount;
+    
     // For students
     private boolean saved;
     private boolean applied;
+    private ApplicationStatus applicationStatus;
 }

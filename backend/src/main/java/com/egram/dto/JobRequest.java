@@ -31,4 +31,13 @@ public class JobRequest {
     
     @Builder.Default
     private Boolean active = true;
+
+    private String compensation;
+    private String skillsRequired;
+    
+    @URL(message = "Company logo URL must be valid")
+    private String companyLogoUrl;
+    
+    private String remoteType;
+    private java.time.LocalDate expiryDate;
 }
