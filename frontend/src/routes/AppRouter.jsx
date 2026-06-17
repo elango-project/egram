@@ -16,6 +16,7 @@ import VideosPage from '../pages/Videos/VideosPage';
 
 import CoursesPage from '../pages/Courses/CoursesPage';
 import AssessmentsPage from '../pages/Assessments/AssessmentsPage';
+import JobsPage from '../pages/Jobs/JobsPage';
 
 const AppRouter = () => {
   return (
@@ -37,6 +38,7 @@ const AppRouter = () => {
             <Route path="/dashboard/videos" element={<VideosPage />} />
             <Route path="/dashboard/courses" element={<CoursesPage />} />
             <Route path="/dashboard/assessments" element={<AssessmentsPage />} />
+            <Route path="/dashboard/jobs" element={<JobsPage />} />
           </Route>
         </Route>
       </Routes>
