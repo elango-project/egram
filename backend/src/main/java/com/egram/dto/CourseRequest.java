@@ -23,5 +23,5 @@ public class CourseRequest {
 
     private String difficulty;
 
-    private int durationMinutes;
+    private Integer durationMinutes;
 }

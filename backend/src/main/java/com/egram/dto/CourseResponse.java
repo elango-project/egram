@@ -20,7 +20,7 @@ public class CourseResponse {
     private String thumbnailUrl;
     private String category;
     private String difficulty;
-    private int durationMinutes;
+    private Integer durationMinutes;
     private String createdBy;
     private int totalModules;
     private int completedModules;

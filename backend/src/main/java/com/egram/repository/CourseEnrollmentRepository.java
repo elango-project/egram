@@ -12,6 +12,11 @@ import java.util.UUID;
 public interface CourseEnrollmentRepository extends JpaRepository<CourseEnrollment, CourseEnrollmentId> {
     boolean existsByCourseIdAndStudentId(UUID courseId, UUID studentId);
     Optional<CourseEnrollment> findByCourseIdAndStudentId(UUID courseId, UUID studentId);
-    void deleteByCourseId(UUID courseId);
-    java.util.List<CourseEnrollment> findByCourseId(UUID courseId);
+    
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM CourseEnrollment c WHERE c.course.id = :courseId")
+    void deleteByCourseId(@org.springframework.data.repository.query.Param("courseId") UUID courseId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT c FROM CourseEnrollment c WHERE c.course.id = :courseId")
+    java.util.List<CourseEnrollment> findByCourseId(@org.springframework.data.repository.query.Param("courseId") UUID courseId);
 }
