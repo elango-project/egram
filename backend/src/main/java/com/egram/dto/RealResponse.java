@@ -22,7 +22,9 @@ public class RealResponse {
     private UUID uploaderId;
     private LocalDateTime createdAt;
     
-    private boolean isLikedByCurrentUser;
-    private boolean isSavedByCurrentUser;
-    private long likeCount;
+    private Boolean liked;
+    private Boolean saved;
+    private Long likeCount;
+    private Long viewCount;
+    private Integer commentCount;
 }

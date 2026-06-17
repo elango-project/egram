@@ -1,13 +1,18 @@
 import axiosInstance from '../api/axiosInstance';
 
 const realService = {
-  getReals: async () => {
-    const response = await axiosInstance.get('/reals');
+  getReals: async (page = 0, size = 10) => {
+    const response = await axiosInstance.get(`/reals?page=${page}&size=${size}`);
     return response.data;
   },
 
   getRealById: async (id) => {
     const response = await axiosInstance.get(`/reals/${id}`);
+    return response.data;
+  },
+
+  recordView: async (id) => {
+    const response = await axiosInstance.post(`/reals/${id}/view`);
     return response.data;
   },
 
@@ -48,6 +53,11 @@ const realService = {
 
   getComments: async (id) => {
     const response = await axiosInstance.get(`/reals/${id}/comments`);
+    return response.data;
+  },
+
+  deleteComment: async (commentId) => {
+    const response = await axiosInstance.delete(`/reals/comments/${commentId}`);
     return response.data;
   }
 };

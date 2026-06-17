@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface RealCommentRepository extends JpaRepository<RealComment, UUID> {
     List<RealComment> findByRealIdOrderByCreatedAtDesc(UUID realId);
     void deleteByRealId(UUID realId);
+    int countByRealId(UUID realId);
 }

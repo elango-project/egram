@@ -16,8 +16,8 @@ const AdminReals = () => {
 
   const fetchReals = async () => {
     try {
-      const data = await realService.getReals();
-      setReals(data);
+      const data = await realService.getReals(0, 100);
+      setReals(data.content);
     } catch (error) {
       console.error('Failed to fetch reals', error);
     }
@@ -107,6 +107,7 @@ const AdminReals = () => {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Analytics</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
@@ -121,8 +122,14 @@ const AdminReals = () => {
                     )}
                     <div>
                       <div className="text-sm font-medium text-gray-900">{real.title}</div>
-                      <div className="text-sm text-gray-500">{real.likesCount} Likes</div>
                     </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex gap-4 text-sm font-medium text-gray-600">
+                    <span title="Total Views">👁 {real.viewCount || 0}</span>
+                    <span title="Total Likes">❤️ {real.likeCount || 0}</span>
+                    <span title="Total Comments">💬 {real.commentCount || 0}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -135,7 +142,7 @@ const AdminReals = () => {
             ))}
             {reals.length === 0 && (
               <tr>
-                <td colSpan="3" className="px-6 py-4 text-center text-gray-500">No Reals uploaded yet.</td>
+                <td colSpan="4" className="px-6 py-4 text-center text-gray-500">No Reals uploaded yet.</td>
               </tr>
             )}
           </tbody>

@@ -58,11 +58,24 @@ public class RealService {
     }
 
     @Transactional(readOnly = true)
-    public List<RealResponse> getAllReals() {
+    public com.egram.dto.PageResponse<RealResponse> getAllReals(int page, int size) {
         User currentUser = getCurrentUser();
-        return realRepository.findAll().stream()
+        org.springframework.data.domain.Page<Real> realPage = realRepository.findAll(
+            org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"))
+        );
+        
+        List<RealResponse> content = realPage.getContent().stream()
                 .map(real -> mapToRealResponse(real, currentUser))
                 .collect(Collectors.toList());
+
+        return com.egram.dto.PageResponse.<RealResponse>builder()
+                .content(content)
+                .page(realPage.getNumber())
+                .size(realPage.getSize())
+                .totalPages(realPage.getTotalPages())
+                .totalElements(realPage.getTotalElements())
+                .last(realPage.isLast())
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -183,10 +196,26 @@ public class RealService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public void deleteComment(UUID commentId) {
+        if (!realCommentRepository.existsById(commentId)) {
+            throw new EgramException("Comment not found", HttpStatus.NOT_FOUND);
+        }
+        realCommentRepository.deleteById(commentId);
+    }
+
+    @Transactional
+    public void incrementViewCount(UUID id) {
+        Real real = getRealOrThrow(id);
+        real.setViewCount(real.getViewCount() + 1);
+        realRepository.save(real);
+    }
+
     private RealResponse mapToRealResponse(Real real, User currentUser) {
-        boolean isLiked = realLikeRepository.existsByRealIdAndStudentId(real.getId(), currentUser.getId());
-        boolean isSaved = savedRealRepository.existsByRealIdAndStudentId(real.getId(), currentUser.getId());
+        boolean isLiked = currentUser != null && realLikeRepository.existsByRealIdAndStudentId(real.getId(), currentUser.getId());
+        boolean isSaved = currentUser != null && savedRealRepository.existsByRealIdAndStudentId(real.getId(), currentUser.getId());
         long likeCount = realLikeRepository.countByRealId(real.getId());
+        int commentCount = realCommentRepository.countByRealId(real.getId());
 
         return RealResponse.builder()
                 .id(real.getId())
@@ -197,9 +226,11 @@ public class RealService {
                 .uploaderName(real.getUploadedBy().getFullName())
                 .uploaderId(real.getUploadedBy().getId())
                 .createdAt(real.getCreatedAt())
-                .isLikedByCurrentUser(isLiked)
-                .isSavedByCurrentUser(isSaved)
+                .liked(isLiked)
+                .saved(isSaved)
                 .likeCount(likeCount)
+                .commentCount(commentCount)
+                .viewCount(real.getViewCount())
                 .build();
     }
 }

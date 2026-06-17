@@ -40,13 +40,21 @@ public class RealController {
     // --- Student / Shared Endpoints ---
 
     @GetMapping
-    public ResponseEntity<List<RealResponse>> getAllReals() {
-        return ResponseEntity.ok(realService.getAllReals());
+    public ResponseEntity<com.egram.dto.PageResponse<RealResponse>> getAllReals(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(realService.getAllReals(page, size));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<RealResponse> getRealById(@PathVariable UUID id) {
         return ResponseEntity.ok(realService.getRealById(id));
+    }
+
+    @PostMapping("/{id}/view")
+    public ResponseEntity<Void> incrementViewCount(@PathVariable UUID id) {
+        realService.incrementViewCount(id);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/like")
@@ -88,5 +96,12 @@ public class RealController {
     @GetMapping("/{id}/comments")
     public ResponseEntity<List<CommentResponse>> getComments(@PathVariable UUID id) {
         return ResponseEntity.ok(realService.getComments(id));
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId) {
+        realService.deleteComment(commentId);
+        return ResponseEntity.noContent().build();
     }
 }
