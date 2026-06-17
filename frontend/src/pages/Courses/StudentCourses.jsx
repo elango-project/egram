@@ -79,7 +79,12 @@ const StudentCourses = () => {
         <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
           <div className="md:flex">
             <div className="md:w-1/3 bg-gray-100 h-64 md:h-auto">
-              <img src={selectedCourse.thumbnailUrl} alt={selectedCourse.title} className="w-full h-full object-cover" />
+              <img 
+                src={selectedCourse.thumbnailUrl} 
+                alt={selectedCourse.title} 
+                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400?text=Course+Image'; }}
+                className="w-full h-full object-cover" 
+              />
             </div>
             
             <div className="p-8 md:w-2/3">
@@ -198,7 +203,12 @@ const StudentCourses = () => {
             className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-lg transition-shadow"
           >
             <div className="h-48 relative">
-              <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
+              <img 
+                src={course.thumbnailUrl} 
+                alt={course.title} 
+                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400?text=Course+Image'; }}
+                className="w-full h-full object-cover" 
+              />
               {course.enrolled && (
                 <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
                   ENROLLED

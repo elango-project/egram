@@ -12,13 +12,18 @@ const assessmentService = {
     return response.data;
   },
 
-  submitAssessment: async (id, answers) => {
-    const response = await axiosInstance.post(`/assessments/${id}/submit`, { answers });
+  submitAssessment: async (id, payload) => {
+    const response = await axiosInstance.post(`/assessments/${id}/submit`, payload);
     return response.data;
   },
 
-  getAssessmentResult: async (id) => {
-    const response = await axiosInstance.get(`/assessments/${id}/result`);
+  getAssessmentHistory: async (id) => {
+    const response = await axiosInstance.get(`/assessments/${id}/history`);
+    return response.data;
+  },
+
+  getAssessmentAnalytics: async (id) => {
+    const response = await axiosInstance.get(`/assessments/${id}/analytics`);
     return response.data;
   },
 

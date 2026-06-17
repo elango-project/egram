@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "assessment_attempts", indexes = {
-        @Index(name = "idx_assessment_attempts_student_assessment", columnList = "student_id, assessment_id", unique = true)
+        @Index(name = "idx_assessment_attempts_student_assessment", columnList = "student_id, assessment_id")
 })
 @Getter
 @Setter
@@ -38,6 +38,18 @@ public class AssessmentAttempt {
 
     @Column(name = "passed", nullable = false)
     private Boolean passed;
+
+    @Column(name = "total_questions", nullable = false)
+    private Integer totalQuestions;
+
+    @Column(name = "correct_answers", nullable = false)
+    private Integer correctAnswers;
+
+    @Column(name = "wrong_answers", nullable = false)
+    private Integer wrongAnswers;
+
+    @Column(name = "question_order", columnDefinition = "TEXT")
+    private String questionOrder;
 
     @Column(name = "started_at", nullable = false, updatable = false)
     private LocalDateTime startedAt;

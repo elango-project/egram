@@ -142,15 +142,34 @@ public class AssessmentService {
         User student = getCurrentUser();
         Assessment assessment = getAssessmentOrThrow(id);
 
-        if (attemptRepository.existsByAssessmentIdAndStudentId(id, student.getId())) {
-            throw new EgramException("Assessment already submitted", HttpStatus.BAD_REQUEST);
-        }
-
         List<AssessmentQuestion> questions = questionRepository.findByAssessmentId(id);
         int totalQuestions = questions.size();
         
         if (totalQuestions == 0) {
             throw new EgramException("Assessment has no questions", HttpStatus.BAD_REQUEST);
+        }
+
+        java.time.LocalDateTime startedAt = null;
+        if (request.getStartedAt() != null) {
+            try {
+                // Parse ISO string (which might contain 'Z' or offset) properly
+                java.time.Instant instant = java.time.Instant.parse(request.getStartedAt());
+                startedAt = java.time.LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault());
+            } catch (Exception e) {
+                // ignore or handle
+            }
+        }
+        
+        java.time.LocalDateTime submittedAt = java.time.LocalDateTime.now();
+
+        // Server-side timer validation
+        if (startedAt != null && assessment.getDurationMinutes() != null && assessment.getDurationMinutes() > 0) {
+            long diffSeconds = java.time.Duration.between(startedAt, submittedAt).getSeconds();
+            long maxSeconds = assessment.getDurationMinutes() * 60 + 30; // 30 seconds grace period
+            if (diffSeconds > maxSeconds) {
+                // We could reject, but let's just log or throw. For MVP let's throw.
+                throw new EgramException("Time limit exceeded for assessment", HttpStatus.BAD_REQUEST);
+            }
         }
 
         int score = 0;
@@ -161,8 +180,14 @@ public class AssessmentService {
             }
         }
 
+        int wrongAnswers = totalQuestions - score;
         int percentage = (int) Math.round(((double) score / totalQuestions) * 100);
         boolean passed = percentage >= assessment.getPassingPercentage();
+
+        String questionOrderStr = null;
+        if (request.getQuestionOrder() != null && !request.getQuestionOrder().isEmpty()) {
+            questionOrderStr = String.join(",", request.getQuestionOrder());
+        }
 
         AssessmentAttempt attempt = AssessmentAttempt.builder()
                 .assessment(assessment)
@@ -170,6 +195,12 @@ public class AssessmentService {
                 .score(score)
                 .percentage(percentage)
                 .passed(passed)
+                .totalQuestions(totalQuestions)
+                .correctAnswers(score)
+                .wrongAnswers(wrongAnswers)
+                .questionOrder(questionOrderStr)
+                .startedAt(startedAt != null ? startedAt : submittedAt)
+                .submittedAt(submittedAt)
                 .build();
 
         attempt = attemptRepository.save(attempt);
@@ -185,22 +216,56 @@ public class AssessmentService {
     }
 
     @Transactional(readOnly = true)
-    public AssessmentResultResponse getMyResult(UUID id) {
+    public List<AssessmentAttemptResponse> getAttemptHistory(UUID id) {
         User student = getCurrentUser();
         getAssessmentOrThrow(id);
 
-        AssessmentAttempt attempt = attemptRepository.findByAssessmentIdAndStudentId(id, student.getId())
-                .orElseThrow(() -> new EgramException("No attempt found for this assessment", HttpStatus.NOT_FOUND));
+        List<AssessmentAttempt> attempts = attemptRepository.findByAssessmentIdAndStudentIdOrderBySubmittedAtDesc(id, student.getId());
 
-        int totalQuestions = questionRepository.findByAssessmentId(id).size();
+        return attempts.stream().map(a -> {
+            return AssessmentAttemptResponse.builder()
+                .id(a.getId())
+                .assessmentId(a.getAssessment().getId())
+                .studentName(a.getStudent().getFullName())
+                .score(a.getScore())
+                .totalQuestions(a.getTotalQuestions())
+                .correctAnswers(a.getCorrectAnswers())
+                .wrongAnswers(a.getWrongAnswers())
+                .percentage(a.getPercentage())
+                .passed(a.getPassed())
+                .questionOrder(a.getQuestionOrder())
+                .startedAt(a.getStartedAt())
+                .submittedAt(a.getSubmittedAt())
+                .build();
+        }).collect(Collectors.toList());
+    }
 
-        return AssessmentResultResponse.builder()
-                .assessmentId(id)
-                .score(attempt.getScore())
-                .totalQuestions(totalQuestions)
-                .percentage(attempt.getPercentage())
-                .passed(attempt.getPassed())
-                .submittedAt(attempt.getSubmittedAt())
+    @Transactional(readOnly = true)
+    public AssessmentAnalyticsResponse getAnalytics(UUID id) {
+        getAssessmentOrThrow(id);
+
+        List<AssessmentAttempt> attempts = attemptRepository.findByAssessmentId(id);
+
+        long totalAttempts = attempts.size();
+        if (totalAttempts == 0) {
+            return AssessmentAnalyticsResponse.builder()
+                    .totalAttempts(0)
+                    .averageScore(0.0)
+                    .passRate(0.0)
+                    .highestScore(0)
+                    .build();
+        }
+
+        double averageScore = attempts.stream().mapToInt(AssessmentAttempt::getScore).average().orElse(0.0);
+        long passedCount = attempts.stream().filter(AssessmentAttempt::getPassed).count();
+        double passRate = ((double) passedCount / totalAttempts) * 100;
+        int highestScore = attempts.stream().mapToInt(AssessmentAttempt::getScore).max().orElse(0);
+
+        return AssessmentAnalyticsResponse.builder()
+                .totalAttempts(totalAttempts)
+                .averageScore(Math.round(averageScore * 100.0) / 100.0)
+                .passRate(Math.round(passRate * 100.0) / 100.0)
+                .highestScore(highestScore)
                 .build();
     }
 

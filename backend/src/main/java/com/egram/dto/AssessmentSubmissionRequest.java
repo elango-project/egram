@@ -17,4 +17,8 @@ public class AssessmentSubmissionRequest {
 
     @NotNull(message = "Answers are required")
     private Map<UUID, String> answers;
+
+    private String startedAt; // ISO format
+    
+    private java.util.List<String> questionOrder;
 }

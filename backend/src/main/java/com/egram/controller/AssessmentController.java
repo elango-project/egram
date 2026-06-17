@@ -87,9 +87,15 @@ public class AssessmentController {
         return ResponseEntity.ok(assessmentService.submitAssessment(id, request));
     }
 
-    @GetMapping("/{id}/result")
+    @GetMapping("/{id}/history")
     @PreAuthorize("hasAuthority('ROLE_STUDENT')")
-    public ResponseEntity<AssessmentResultResponse> getMyResult(@PathVariable UUID id) {
-        return ResponseEntity.ok(assessmentService.getMyResult(id));
+    public ResponseEntity<List<AssessmentAttemptResponse>> getAttemptHistory(@PathVariable UUID id) {
+        return ResponseEntity.ok(assessmentService.getAttemptHistory(id));
+    }
+
+    @GetMapping("/{id}/analytics")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<AssessmentAnalyticsResponse> getAnalytics(@PathVariable UUID id) {
+        return ResponseEntity.ok(assessmentService.getAnalytics(id));
     }
 }

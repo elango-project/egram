@@ -10,8 +10,8 @@ import java.util.UUID;
 
 @Repository
 public interface AssessmentAttemptRepository extends JpaRepository<AssessmentAttempt, UUID> {
-    boolean existsByAssessmentIdAndStudentId(UUID assessmentId, UUID studentId);
-    Optional<AssessmentAttempt> findByAssessmentIdAndStudentId(UUID assessmentId, UUID studentId);
+    List<AssessmentAttempt> findByAssessmentIdAndStudentIdOrderBySubmittedAtDesc(UUID assessmentId, UUID studentId);
+    List<AssessmentAttempt> findByAssessmentId(UUID assessmentId);
     List<AssessmentAttempt> findByStudentId(UUID studentId);
     void deleteByAssessmentId(UUID assessmentId);
 }

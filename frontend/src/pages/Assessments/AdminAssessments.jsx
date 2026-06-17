@@ -74,9 +74,10 @@ const AdminAssessments = () => {
     try {
       // Fetch questions for this assessment
       const questions = await assessmentService.getAssessmentQuestions(assessment.id);
-      setSelectedAssessment({ ...assessment, questions });
+      const analytics = await assessmentService.getAssessmentAnalytics(assessment.id);
+      setSelectedAssessment({ ...assessment, questions, analytics });
     } catch (error) {
-      console.error('Failed to fetch questions', error);
+      console.error('Failed to fetch details', error);
     }
   };
 
@@ -205,7 +206,29 @@ const AdminAssessments = () => {
         <div>
           {selectedAssessment ? (
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-xl font-bold mb-2 text-green-800">{selectedAssessment.title} - Questions</h3>
+              <h3 className="text-xl font-bold mb-4 text-green-800">{selectedAssessment.title} - Dashboard</h3>
+              
+              {/* Analytics Dashboard */}
+              {selectedAssessment.analytics && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-center">
+                    <p className="text-sm text-blue-600 font-semibold">Total Attempts</p>
+                    <p className="text-2xl font-bold text-blue-900">{selectedAssessment.analytics.totalAttempts}</p>
+                  </div>
+                  <div className="bg-green-50 border border-green-100 rounded-lg p-4 text-center">
+                    <p className="text-sm text-green-600 font-semibold">Pass Rate</p>
+                    <p className="text-2xl font-bold text-green-900">{selectedAssessment.analytics.passRate}%</p>
+                  </div>
+                  <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-center">
+                    <p className="text-sm text-purple-600 font-semibold">Average Score</p>
+                    <p className="text-2xl font-bold text-purple-900">{selectedAssessment.analytics.averageScore}</p>
+                  </div>
+                  <div className="bg-orange-50 border border-orange-100 rounded-lg p-4 text-center">
+                    <p className="text-sm text-orange-600 font-semibold">Highest Score</p>
+                    <p className="text-2xl font-bold text-orange-900">{selectedAssessment.analytics.highestScore}</p>
+                  </div>
+                </div>
+              )}
               
               {/* Add Question Form */}
               <div className="bg-green-50 p-4 rounded-md mb-6 border border-green-100">
