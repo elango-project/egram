@@ -12,6 +12,8 @@ import Dashboard from '../pages/Dashboard';
 import NotFound from '../pages/NotFound';
 import RealsPage from '../pages/Reals/RealsPage';
 
+import VideosPage from '../pages/Videos/VideosPage';
+
 const AppRouter = () => {
   return (
     <BrowserRouter>
@@ -29,6 +31,7 @@ const AppRouter = () => {
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/reals" element={<RealsPage />} />
+            <Route path="/dashboard/videos" element={<VideosPage />} />
           </Route>
         </Route>
       </Routes>
