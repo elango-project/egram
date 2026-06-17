@@ -13,6 +13,7 @@ import NotFound from '../pages/NotFound';
 import RealsPage from '../pages/Reals/RealsPage';
 
 import VideosPage from '../pages/Videos/VideosPage';
+import VideoPlayerView from '../pages/Videos/VideoPlayerView';
 
 import CoursesPage from '../pages/Courses/CoursesPage';
 import CertificatePage from '../pages/Courses/CertificatePage';
@@ -37,6 +38,7 @@ const AppRouter = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/reals" element={<RealsPage />} />
             <Route path="/dashboard/videos" element={<VideosPage />} />
+            <Route path="/dashboard/videos/:id" element={<VideoPlayerView />} />
             <Route path="/dashboard/courses" element={<CoursesPage />} />
             <Route path="/certificate/:courseId" element={<CertificatePage />} />
             <Route path="/dashboard/assessments" element={<AssessmentsPage />} />

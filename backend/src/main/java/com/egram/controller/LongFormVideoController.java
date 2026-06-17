@@ -37,12 +37,60 @@ public class LongFormVideoController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/comments/{commentId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId) {
+        videoService.deleteComment(commentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/analytics")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<com.egram.dto.VideoAnalyticsResponse> getAnalytics(@PathVariable UUID id) {
+        return ResponseEntity.ok(videoService.getAnalytics(id));
+    }
+
     // --- Student / Shared Endpoints ---
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<LongFormVideoResponse>> getFeed() {
-        return ResponseEntity.ok(videoService.getFeed());
+    public ResponseEntity<com.egram.dto.PageResponse<LongFormVideoResponse>> getFeed(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(videoService.getFeed(page, size));
+    }
+
+    @GetMapping("/continue-watching")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    public ResponseEntity<List<LongFormVideoResponse>> getContinueWatching() {
+        return ResponseEntity.ok(videoService.getContinueWatching());
+    }
+
+    @GetMapping("/{id}/recommendations")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<LongFormVideoResponse>> getRecommendations(@PathVariable UUID id) {
+        return ResponseEntity.ok(videoService.getRecommendations(id));
+    }
+
+    @PostMapping("/{id}/view")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> incrementViewCount(@PathVariable UUID id) {
+        videoService.incrementViewCount(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/progress")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    public ResponseEntity<com.egram.dto.VideoProgressResponse> updateProgress(
+            @PathVariable UUID id,
+            @Valid @RequestBody com.egram.dto.VideoProgressRequest request) {
+        return ResponseEntity.ok(videoService.updateProgress(id, request));
+    }
+
+    @GetMapping("/{id}/progress")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    public ResponseEntity<com.egram.dto.VideoProgressResponse> getProgress(@PathVariable UUID id) {
+        return ResponseEntity.ok(videoService.getProgress(id));
     }
 
     @GetMapping("/{id}")
@@ -88,7 +136,7 @@ public class LongFormVideoController {
     }
 
     @GetMapping("/{id}/comments")
-    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<VideoCommentResponse>> getComments(@PathVariable UUID id) {
         return ResponseEntity.ok(videoService.getComments(id));
     }

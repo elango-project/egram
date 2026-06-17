@@ -49,6 +49,49 @@ const videoService = {
   getComments: async (id) => {
     const response = await axiosInstance.get(`/videos/${id}/comments`);
     return response.data;
+  },
+
+  deleteComment: async (commentId) => {
+    const response = await axiosInstance.delete(`/videos/comments/${commentId}`);
+    return response.data;
+  },
+
+  getAnalytics: async (id) => {
+    const response = await axiosInstance.get(`/videos/${id}/analytics`);
+    return response.data;
+  },
+
+  getFeedPage: async (page = 0, size = 10) => {
+    const response = await axiosInstance.get(`/videos?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getContinueWatching: async () => {
+    const response = await axiosInstance.get('/videos/continue-watching');
+    return response.data;
+  },
+
+  getRecommendations: async (id) => {
+    const response = await axiosInstance.get(`/videos/${id}/recommendations`);
+    return response.data;
+  },
+
+  recordView: async (id) => {
+    const response = await axiosInstance.post(`/videos/${id}/view`);
+    return response.data;
+  },
+
+  updateProgress: async (id, currentPositionSeconds, percentageWatched) => {
+    const response = await axiosInstance.post(`/videos/${id}/progress`, {
+      currentPositionSeconds,
+      percentageWatched
+    });
+    return response.data;
+  },
+
+  getProgress: async (id) => {
+    const response = await axiosInstance.get(`/videos/${id}/progress`);
+    return response.data;
   }
 };
 

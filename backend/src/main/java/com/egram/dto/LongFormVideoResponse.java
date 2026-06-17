@@ -22,8 +22,10 @@ public class LongFormVideoResponse {
     private UUID uploaderId;
     private LocalDateTime createdAt;
     
-    private boolean isLikedByCurrentUser;
-    private boolean isSavedByCurrentUser;
-    private long likeCount;
-    private long commentCount;
+    private Boolean liked;
+    private Boolean saved;
+    private Long likeCount;
+    private Long commentCount;
+    private Long viewCount;
+    private VideoProgressResponse progress;
 }

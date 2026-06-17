@@ -42,6 +42,10 @@ public class LongFormVideo {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "view_count")
+    @Builder.Default
+    private Long viewCount = 0L;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

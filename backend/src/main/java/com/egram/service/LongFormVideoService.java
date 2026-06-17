@@ -32,6 +32,7 @@ public class LongFormVideoService {
     private final LongFormVideoCommentRepository commentRepository;
     private final LongFormVideoLikeRepository likeRepository;
     private final SavedLongFormVideoRepository savedRepository;
+    private final com.egram.repository.VideoHistoryRepository historyRepository;
 
     private User getCurrentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -58,11 +59,95 @@ public class LongFormVideoService {
     }
 
     @Transactional(readOnly = true)
-    public List<LongFormVideoResponse> getFeed() {
+    public com.egram.dto.PageResponse<LongFormVideoResponse> getFeed(int page, int size) {
         User currentUser = getCurrentUser();
-        return videoRepository.findAll().stream()
+        org.springframework.data.domain.Page<LongFormVideo> videoPage = videoRepository.findAll(
+            org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"))
+        );
+        
+        List<LongFormVideoResponse> content = videoPage.getContent().stream()
                 .map(video -> mapToResponse(video, currentUser))
                 .collect(Collectors.toList());
+
+        return com.egram.dto.PageResponse.<LongFormVideoResponse>builder()
+                .content(content)
+                .page(videoPage.getNumber())
+                .size(videoPage.getSize())
+                .totalPages(videoPage.getTotalPages())
+                .totalElements(videoPage.getTotalElements())
+                .last(videoPage.isLast())
+                .build();
+    }
+
+    @Transactional
+    public com.egram.dto.VideoProgressResponse updateProgress(UUID id, com.egram.dto.VideoProgressRequest request) {
+        User student = getCurrentUser();
+        LongFormVideo video = getVideoOrThrow(id);
+        
+        com.egram.entity.VideoHistory history = historyRepository.findByStudentIdAndVideoId(student.getId(), video.getId())
+            .orElse(com.egram.entity.VideoHistory.builder()
+                .student(student)
+                .video(video)
+                .build());
+        
+        history.setCurrentPositionSeconds(request.getCurrentPositionSeconds());
+        history.setPercentageWatched(request.getPercentageWatched());
+        history.setCompleted(request.getPercentageWatched() >= 90.0);
+        
+        history = historyRepository.save(history);
+        
+        return com.egram.dto.VideoProgressResponse.builder()
+            .currentPositionSeconds(history.getCurrentPositionSeconds())
+            .percentageWatched(history.getPercentageWatched())
+            .lastWatchedAt(history.getLastWatchedAt())
+            .completed(history.getCompleted())
+            .build();
+    }
+
+    @Transactional(readOnly = true)
+    public com.egram.dto.VideoProgressResponse getProgress(UUID id) {
+        User student = getCurrentUser();
+        return historyRepository.findByStudentIdAndVideoId(student.getId(), id)
+            .map(history -> com.egram.dto.VideoProgressResponse.builder()
+                .currentPositionSeconds(history.getCurrentPositionSeconds())
+                .percentageWatched(history.getPercentageWatched())
+                .lastWatchedAt(history.getLastWatchedAt())
+                .completed(history.getCompleted())
+                .build())
+            .orElse(com.egram.dto.VideoProgressResponse.builder()
+                .currentPositionSeconds(0L)
+                .percentageWatched(0.0)
+                .completed(false)
+                .build());
+    }
+
+    @Transactional(readOnly = true)
+    public List<LongFormVideoResponse> getContinueWatching() {
+        User student = getCurrentUser();
+        org.springframework.data.domain.Page<com.egram.entity.VideoHistory> page = historyRepository.findContinueWatching(
+            student.getId(), 
+            org.springframework.data.domain.PageRequest.of(0, 5)
+        );
+        
+        return page.getContent().stream()
+            .map(history -> mapToResponse(history.getVideo(), student))
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<LongFormVideoResponse> getRecommendations(UUID videoId) {
+        User student = getCurrentUser();
+        // Priority MVP: Most Viewed (for now just returning top 5 viewed videos excluding the current one)
+        // If we added courses/categories, we'd filter here.
+        org.springframework.data.domain.Page<LongFormVideo> page = videoRepository.findAll(
+            org.springframework.data.domain.PageRequest.of(0, 6, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "viewCount"))
+        );
+        
+        return page.getContent().stream()
+            .filter(v -> !v.getId().equals(videoId))
+            .limit(5)
+            .map(video -> mapToResponse(video, student))
+            .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -76,6 +161,7 @@ public class LongFormVideoService {
         if (!videoRepository.existsById(id)) {
             throw new EgramException("Video not found", HttpStatus.NOT_FOUND);
         }
+        historyRepository.deleteByVideoId(id);
         commentRepository.deleteByVideoId(id);
         likeRepository.deleteByVideoId(id);
         savedRepository.deleteByVideoId(id);
@@ -183,11 +269,63 @@ public class LongFormVideoService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public void deleteComment(UUID commentId) {
+        if (!commentRepository.existsById(commentId)) {
+            throw new EgramException("Comment not found", HttpStatus.NOT_FOUND);
+        }
+        commentRepository.deleteById(commentId);
+    }
+
+    @Transactional
+    public void incrementViewCount(UUID id) {
+        LongFormVideo video = getVideoOrThrow(id);
+        video.setViewCount(video.getViewCount() + 1);
+        videoRepository.save(video);
+    }
+
+    @Transactional(readOnly = true)
+    public com.egram.dto.VideoAnalyticsResponse getAnalytics(UUID id) {
+        LongFormVideo video = getVideoOrThrow(id);
+        Long views = video.getViewCount();
+        Long likes = likeRepository.countByVideoId(id);
+        Long comments = (long) commentRepository.findByVideoIdOrderByCreatedAtDesc(id).size();
+        Double avgWatch = historyRepository.getAveragePercentageWatchedByVideoId(id);
+        
+        Long uniqueViewers = historyRepository.countTotalWatchersByVideoId(id);
+        Long completedUsers = historyRepository.countCompletedByVideoId(id);
+        Double completionRate = uniqueViewers > 0 ? (double) completedUsers / uniqueViewers * 100.0 : 0.0;
+        
+        Long continueWatchingCount = historyRepository.countContinueWatchingByVideoId(id);
+
+        return com.egram.dto.VideoAnalyticsResponse.builder()
+                .videoId(id)
+                .views(views)
+                .likes(likes)
+                .comments(comments)
+                .averageWatchPercentage(avgWatch != null ? avgWatch : 0.0)
+                .completionRate(completionRate)
+                .continueWatchingCount(continueWatchingCount)
+                .build();
+    }
+
     private LongFormVideoResponse mapToResponse(LongFormVideo video, User currentUser) {
-        boolean isLiked = likeRepository.existsByVideoIdAndStudentId(video.getId(), currentUser.getId());
-        boolean isSaved = savedRepository.existsByVideoIdAndStudentId(video.getId(), currentUser.getId());
+        boolean isLiked = currentUser != null && likeRepository.existsByVideoIdAndStudentId(video.getId(), currentUser.getId());
+        boolean isSaved = currentUser != null && savedRepository.existsByVideoIdAndStudentId(video.getId(), currentUser.getId());
         long likeCount = likeRepository.countByVideoId(video.getId());
         long commentCount = commentRepository.findByVideoIdOrderByCreatedAtDesc(video.getId()).size();
+
+        com.egram.dto.VideoProgressResponse progress = null;
+        if (currentUser != null && currentUser.getRole().equals(com.egram.entity.Role.STUDENT)) {
+            progress = historyRepository.findByStudentIdAndVideoId(currentUser.getId(), video.getId())
+                .map(h -> com.egram.dto.VideoProgressResponse.builder()
+                    .currentPositionSeconds(h.getCurrentPositionSeconds())
+                    .percentageWatched(h.getPercentageWatched())
+                    .lastWatchedAt(h.getLastWatchedAt())
+                    .completed(h.getCompleted())
+                    .build())
+                .orElse(null);
+        }
 
         return LongFormVideoResponse.builder()
                 .id(video.getId())
@@ -198,10 +336,12 @@ public class LongFormVideoService {
                 .uploaderName(video.getUploadedBy().getFullName())
                 .uploaderId(video.getUploadedBy().getId())
                 .createdAt(video.getCreatedAt())
-                .isLikedByCurrentUser(isLiked)
-                .isSavedByCurrentUser(isSaved)
+                .liked(isLiked)
+                .saved(isSaved)
                 .likeCount(likeCount)
                 .commentCount(commentCount)
+                .viewCount(video.getViewCount())
+                .progress(progress)
                 .build();
     }
 }
