@@ -85,7 +85,7 @@ public class SecurityConfig {
         List<String> allowedOrigins = new java.util.ArrayList<>(List.of(
             "http://localhost:5173",
             "http://localhost:3000",
-            "https://egram-frontend.vercel.app" // Fallback example
+            "https://egram-alpha.vercel.app" // Explicit Vercel domain
         ));
         if (frontendUrl != null && !frontendUrl.isBlank()) {
             allowedOrigins.add(frontendUrl);
