@@ -27,15 +27,25 @@ public class AdminSeeder implements CommandLineRunner {
             String adminEmail = "admin@egram.com";
             if (!userRepository.existsByEmail(adminEmail)) {
                 User admin = User.builder()
-                        .fullName("Super Admin")
+                        .fullName("Demo Admin")
                         .email(adminEmail)
                         .password(passwordEncoder.encode("Password@123"))
                         .role(Role.ADMIN)
                         .build();
                 userRepository.save(admin);
-                log.info("Admin user seeded successfully with email: {}", adminEmail);
-            } else {
-                log.info("Admin user already exists.");
+                log.info("Demo admin user seeded successfully: {}", adminEmail);
+            }
+            
+            String studentEmail = "student@egram.com";
+            if (!userRepository.existsByEmail(studentEmail)) {
+                User student = User.builder()
+                        .fullName("Demo Student")
+                        .email(studentEmail)
+                        .password(passwordEncoder.encode("Password@123"))
+                        .role(Role.STUDENT)
+                        .build();
+                userRepository.save(student);
+                log.info("Demo student user seeded successfully: {}", studentEmail);
             }
         }
     }

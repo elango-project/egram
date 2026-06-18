@@ -1,91 +1,87 @@
-# Egram MVP - AI Learning Platform
+# Educationgram 🎓
+**A Full-Stack EdTech Platform**
 
-Egram is an AI-powered learning ecosystem built with a robust Spring Boot 3 backend and a responsive React frontend.
+Educationgram is a modern, full-stack educational platform designed to deliver an engaging learning experience through both long-form courses and short-form "Reels" content. Built with a robust Spring Boot backend and a dynamic React frontend, it features role-based access control, interactive assessments, a dedicated job portal, and advanced video tracking.
 
-## Features
-- **Role-Based Access**: Secure login/registration for `STUDENT` and `ADMIN` roles using JWT.
-- **Reals**: Short-form educational video content with likes, saves, and comments.
-- **Videos**: Long-form structured video content.
-- **Courses**: Modular courses with enrollments and progress tracking.
-- **Assessments**: Timed quizzes with automated scoring.
-- **Jobs & Internships**: Browse and apply for opportunities.
+## 🚀 Live Demo
+- **Frontend:** [https://egram-frontend.vercel.app] *[Update with real URL]*
+- **Backend API:** [https://egram-backend.onrender.com/api/swagger-ui.html] *[Update with real URL]*
 
-## Tech Stack
-- **Backend**: Java 21, Spring Boot 3.3.0, Spring Security (JWT), Spring Data JPA.
-- **Database**: PostgreSQL (Neon Serverless DB).
-- **Frontend**: React 18, Vite, Tailwind CSS, React Router, Axios, React Hot Toast.
+### Demo Accounts
+You can test the platform using the following pre-seeded demo accounts:
+* **Admin:** `admin@egram.com` (Password: `Password@123`)
+* **Student:** `student@egram.com` (Password: `Password@123`)
 
-## Local Setup
+---
 
-### Database (Neon Setup)
-1. Create a free PostgreSQL database on [Neon.tech](https://neon.tech).
-2. Copy the connection string.
+## 🛠️ Tech Stack
+* **Frontend:** React, Vite, Tailwind CSS (optional/custom CSS), Context API
+* **Backend:** Java 21, Spring Boot 3.3, Spring Security (JWT), Hibernate/JPA
+* **Database:** PostgreSQL (Neon Serverless)
+* **Media Storage:** Cloudinary
+* **Deployment:** Vercel (Frontend), Render (Backend)
+
+---
+
+## ✨ Key Features
+1. **Short-form & Long-form Content**
+   * TikTok/Instagram-style "Reels" for quick learning concepts.
+   * Comprehensive multi-module video courses.
+   * Automated video progress tracking (Resume from where you left off).
+2. **Course Management & Certification**
+   * Admins can create and manage courses with rich descriptions and thumbnails.
+   * Students enroll, track progress, and complete modules.
+3. **Assessments & Analytics**
+   * Time-bound online assessments for courses.
+   * Instant grading, attempt history, and analytics tracking (Pass rates, average scores).
+4. **Job Portal & Application Tracking**
+   * Built-in job/internship board with filtering (Remote, Onsite, Hybrid).
+   * Resume and Cover Letter submissions.
+   * Real-time application status tracking (Pending -> Shortlisted -> Selected).
+5. **Role-Based Access Control (RBAC)**
+   * Secure JWT authentication separating `ADMIN` and `STUDENT` privileges.
+
+---
+
+## 🏗️ Architecture
+The application follows a standard multi-tier REST API architecture:
+1. **Client Layer:** React SPA deployed on Vercel.
+2. **API Layer:** Spring Boot REST Controllers secured with stateless JWT filters.
+3. **Service Layer:** Business logic handling N+1 optimizations, analytics aggregation, and entity mapping.
+4. **Data Layer:** Spring Data JPA interfacing with a fully managed PostgreSQL database on Neon.
+
+---
+
+## 💻 Local Development Setup
+
+### Prerequisites
+* Java 21+
+* Node.js 18+
+* PostgreSQL database (Local or Neon)
+* Cloudinary Account
 
 ### Backend Setup
-1. Navigate to the `backend` directory.
-2. In `src/main/resources/application.properties`, update the database credentials:
-   ```properties
-   spring.datasource.url=jdbc:postgresql://<NEON_URL>?sslmode=require
-   spring.datasource.username=<YOUR_USERNAME>
-   spring.datasource.password=<YOUR_PASSWORD>
-   jwt.secret=<YOUR_256_BIT_SECRET_KEY>
+1. Navigate to the `backend` directory: `cd backend`
+2. Copy the example environment file: `cp .env.example .env`
+3. Fill in your PostgreSQL and JWT secrets in `.env`.
+4. Run the application:
+   ```bash
+   mvn clean spring-boot:run
    ```
-3. Run `mvn clean compile` then start the application using `mvn spring-boot:run`. The backend runs on `http://localhost:8080`.
+   *The API will be available at `http://localhost:8080/api`*
 
 ### Frontend Setup
-1. Navigate to the `frontend` directory.
-2. Create a `.env` file:
-   ```env
-   VITE_API_BASE_URL=http://localhost:8080/api
+1. Navigate to the `frontend` directory: `cd frontend`
+2. Install dependencies: `npm install`
+3. Start the dev server:
+   ```bash
+   npm run dev
    ```
-3. Run `npm install`.
-4. Run `npm run dev`. The frontend runs on `http://localhost:5173`.
+   *The UI will be available at `http://localhost:5173`*
 
 ---
 
-## Deployment Configuration & Checklists
-
-### Backend (Render Deployment)
-To deploy the Spring Boot backend on Render:
-1. Create a **Web Service** on Render connected to your repository.
-2. Build Command: `./mvnw clean package -DskipTests`
-3. Start Command: `java -jar target/egram-backend-1.0.0-SNAPSHOT.jar`
-4. Set the following **Environment Variables**:
-   - `DB_URL` = `jdbc:postgresql://<NEON_HOST>/<DB_NAME>?sslmode=require`
-   - `DB_USERNAME` = `your_neon_username`
-   - `DB_PASSWORD` = `your_neon_password`
-   - `JWT_SECRET` = `your_generated_jwt_secret`
-5. **Important**: Once deployed, copy your Render URL (e.g., `https://egram-api.onrender.com`).
-
-### Frontend (Vercel Deployment)
-To deploy the React application on Vercel:
-1. **Pre-requisite**: In the backend source code (`SecurityConfig.java`), replace `YOUR_VERCEL_APP_NAME` with the exact Vercel domain you intend to use. Commit and push this change so the backend accepts CORS requests from Vercel.
-2. Connect your repository to Vercel and import the `frontend` folder.
-3. Framework Preset: **Vite**
-4. Build Command: `npm run build`
-5. Output Directory: `dist`
-6. Set the following **Environment Variable**:
-   - `VITE_API_BASE_URL` = `https://egram-api.onrender.com/api` (Replace with your actual Render backend URL)
-
----
-
-## Smoke-Test Checklist
-
-After deployment, perform these manual tests to verify everything is working.
-
-### Admin Tests
-- [ ] Login as an ADMIN user.
-- [ ] Create a Real (verify thumbnail, url, description).
-- [ ] Create a Long-form Video.
-- [ ] Create a Course and add a Module (linking the created Real or Video).
-- [ ] Create an Assessment and add 2 Questions.
-- [ ] Create a Job posting.
-
-### Student Tests
-- [ ] Register a new STUDENT account.
-- [ ] Login to the new account.
-- [ ] View the created Real, Like it, and Save it.
-- [ ] View the Long-form Video.
-- [ ] Enroll in the created Course.
-- [ ] Take the Assessment and verify the score calculates correctly.
-- [ ] Apply to the Job posting.
+## 🛡️ API Documentation
+Once the backend is running, the interactive Swagger OpenAPI documentation is accessible at:
+* **Local:** `http://localhost:8080/api/swagger-ui.html`
+* **Production:** `<your-render-url>/api/swagger-ui.html`
