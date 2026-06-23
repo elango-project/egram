@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -31,6 +32,17 @@ public class Real {
 
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
+
+    @Column(name = "youtube_video_id")
+    private String youtubeVideoId;
+
+    @Column(name = "category")
+    private String category;
+
+    @ElementCollection
+    @CollectionTable(name = "real_tags", joinColumns = @JoinColumn(name = "real_id"))
+    @Column(name = "tag")
+    private List<String> tags;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by", nullable = false)

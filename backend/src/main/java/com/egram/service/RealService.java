@@ -37,6 +37,17 @@ public class RealService {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
+    private String extractYoutubeVideoId(String url) {
+        if (url == null || url.trim().isEmpty()) return null;
+        String pattern = "^(?:https?:\\/\\/)?(?:www\\.|m\\.)?(?:youtu\\.be\\/|youtube\\.com\\/(?:embed\\/|v\\/|watch\\?v=|watch\\?.+&v=|shorts\\/))((\\w|-){11})(?:\\S+)?$";
+        java.util.regex.Pattern compiledPattern = java.util.regex.Pattern.compile(pattern);
+        java.util.regex.Matcher matcher = compiledPattern.matcher(url);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
     private Real getRealOrThrow(UUID id) {
         return realRepository.findById(id)
                 .orElseThrow(() -> new EgramException("Real not found", HttpStatus.NOT_FOUND));
@@ -45,11 +56,27 @@ public class RealService {
     @Transactional
     public RealResponse uploadReal(RealRequest request) {
         User admin = getCurrentUser();
+        
+        String videoId = extractYoutubeVideoId(request.getYoutubeUrl());
+        if (videoId == null && request.getVideoUrl() != null) {
+            videoId = extractYoutubeVideoId(request.getVideoUrl());
+        }
+
+        String finalVideoUrl = request.getYoutubeUrl() != null ? request.getYoutubeUrl() : request.getVideoUrl();
+        String finalThumbnailUrl = request.getThumbnailUrl();
+
+        if (finalThumbnailUrl == null && videoId != null) {
+            finalThumbnailUrl = "https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg";
+        }
+
         Real real = Real.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .videoUrl(request.getVideoUrl())
-                .thumbnailUrl(request.getThumbnailUrl())
+                .videoUrl(finalVideoUrl != null ? finalVideoUrl : "")
+                .thumbnailUrl(finalThumbnailUrl)
+                .youtubeVideoId(videoId)
+                .category(request.getCategory())
+                .tags(request.getTags())
                 .uploadedBy(admin)
                 .build();
         
@@ -223,6 +250,9 @@ public class RealService {
                 .description(real.getDescription())
                 .videoUrl(real.getVideoUrl())
                 .thumbnailUrl(real.getThumbnailUrl())
+                .youtubeVideoId(real.getYoutubeVideoId())
+                .category(real.getCategory())
+                .tags(real.getTags())
                 .uploaderName(real.getUploadedBy().getFullName())
                 .uploaderId(real.getUploadedBy().getId())
                 .createdAt(real.getCreatedAt())

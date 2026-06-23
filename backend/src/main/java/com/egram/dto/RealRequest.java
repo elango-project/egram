@@ -17,8 +17,13 @@ public class RealRequest {
 
     private String description;
 
-    @NotBlank(message = "Video URL is required")
     private String videoUrl;
 
     private String thumbnailUrl;
+
+    private String youtubeUrl;
+
+    private String category;
+
+    private java.util.List<String> tags;
 }

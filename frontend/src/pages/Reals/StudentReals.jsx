@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import realService from '../../services/realService';
+import YouTube from 'react-youtube';
 
 const StudentReals = () => {
   const [reals, setReals] = useState([]);
@@ -206,21 +207,42 @@ const StudentReals = () => {
             data-id={real.id}
             className="reel-item bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 mb-8"
           >
-            {/* Video Placeholder */}
-            <div className="aspect-[9/16] bg-black relative">
-              <img src={real.thumbnailUrl} alt={real.title} className="w-full h-full object-cover opacity-80" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-white text-sm bg-black/50 px-3 py-1 rounded-full">Video URL: {real.videoUrl}</span>
-              </div>
+            {/* Video Player */}
+            <div className="aspect-[9/16] bg-black relative flex items-center justify-center overflow-hidden">
+              {real.youtubeVideoId ? (
+                <YouTube
+                  videoId={real.youtubeVideoId}
+                  opts={{
+                    width: '100%',
+                    height: '100%',
+                    playerVars: {
+                      autoplay: 0,
+                      controls: 1,
+                      rel: 0,
+                      modestbranding: 1
+                    }
+                  }}
+                  className="w-full h-full min-h-[500px]"
+                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}
+                />
+              ) : (
+                <>
+                  <img src={real.thumbnailUrl} alt={real.title} className="w-full h-full object-cover opacity-80" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-white text-sm bg-black/50 px-3 py-1 rounded-full">Legacy Video: {real.videoUrl}</span>
+                  </div>
+                </>
+              )}
               
-              {/* Overlay Info */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+              {/* Overlay Info (Only show if not playing YouTube, or we can overlay on top of youtube but it might block clicks. Let's place it below the video for now, or just keep overlay but pointer-events-none) */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
                 <h3 className="text-white font-bold text-lg">{real.title}</h3>
                 <p className="text-gray-200 text-sm line-clamp-2">{real.description}</p>
                 <div className="text-gray-300 text-xs mt-1 flex items-center gap-2">
                   <span>@{real.uploaderName}</span>
                   <span>•</span>
                   <span>{real.viewCount || 0} views</span>
+                  {real.category && <span className="bg-blue-600/80 px-2 py-0.5 rounded text-white">{real.category}</span>}
                 </div>
               </div>
             </div>

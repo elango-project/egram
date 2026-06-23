@@ -6,8 +6,9 @@ const AdminReals = () => {
   const [reals, setReals] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
-  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [category, setCategory] = useState('');
+  const [tags, setTags] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -27,11 +28,18 @@ const AdminReals = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await realService.uploadReal({ title, description, videoUrl, thumbnailUrl });
+      await realService.uploadReal({ 
+        title, 
+        description, 
+        youtubeUrl,
+        category,
+        tags: tags.split(',').map(t => t.trim()).filter(Boolean)
+      });
       setTitle('');
       setDescription('');
-      setVideoUrl('');
-      setThumbnailUrl('');
+      setYoutubeUrl('');
+      setCategory('');
+      setTags('');
       fetchReals();
     } catch (error) {
       console.error('Failed to upload real', error);
@@ -70,19 +78,25 @@ const AdminReals = () => {
               className="w-full border border-gray-300 rounded px-3 py-2"
             />
             <input 
-              type="text" 
-              placeholder="Video URL" 
+              type="url" 
+              placeholder="YouTube URL" 
               required
-              value={videoUrl} 
-              onChange={e => setVideoUrl(e.target.value)}
+              value={youtubeUrl} 
+              onChange={e => setYoutubeUrl(e.target.value)}
               className="w-full border border-gray-300 rounded px-3 py-2"
             />
             <input 
               type="text" 
-              placeholder="Thumbnail URL" 
-              required
-              value={thumbnailUrl} 
-              onChange={e => setThumbnailUrl(e.target.value)}
+              placeholder="Category (e.g. Frontend, Backend)" 
+              value={category} 
+              onChange={e => setCategory(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2"
+            />
+            <input 
+              type="text" 
+              placeholder="Tags (comma separated)" 
+              value={tags} 
+              onChange={e => setTags(e.target.value)}
               className="w-full border border-gray-300 rounded px-3 py-2"
             />
             <textarea 
