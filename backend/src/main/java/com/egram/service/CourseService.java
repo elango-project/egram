@@ -25,6 +25,12 @@ public class CourseService {
     private final TopicRepository topicRepository;
     private final TopicReelRepository topicReelRepository;
     private final RealRepository realRepository;
+    private final CourseProgressRepository courseProgressRepository;
+    private final TopicProgressRepository topicProgressRepository;
+    private final TopicReelProgressRepository topicReelProgressRepository;
+    private final TopicQuizRepository topicQuizRepository;
+    private final TopicQuestionRepository topicQuestionRepository;
+    private final TopicQuizAttemptRepository topicQuizAttemptRepository;
 
     private User getCurrentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -266,6 +272,241 @@ public class CourseService {
 
         enrollment.setCompletedModules(request.getCompletedModules());
         courseEnrollmentRepository.save(enrollment);
+    }
+
+    // --- Quiz APIs ---
+
+    @Transactional
+    public TopicQuizResponse createOrUpdateQuiz(UUID topicId, TopicQuizRequest request) {
+        Topic topic = topicRepository.findById(topicId)
+                .orElseThrow(() -> new EgramException("Topic not found", HttpStatus.NOT_FOUND));
+
+        TopicQuiz quiz = topicQuizRepository.findByTopicId(topicId).orElse(TopicQuiz.builder()
+                .topic(topic)
+                .build());
+
+        quiz.setTitle(request.getTitle());
+        quiz.setPassingPercentage(request.getPassingPercentage());
+        quiz.setMaxAttempts(request.getMaxAttempts());
+
+        if (quiz.getQuestions() != null) {
+            quiz.getQuestions().clear();
+        } else {
+            quiz.setQuestions(new java.util.ArrayList<>());
+        }
+
+        if (request.getQuestions() != null) {
+            for (TopicQuestionRequest qReq : request.getQuestions()) {
+                quiz.getQuestions().add(TopicQuestion.builder()
+                        .quiz(quiz)
+                        .question(qReq.getQuestion())
+                        .optionA(qReq.getOptionA())
+                        .optionB(qReq.getOptionB())
+                        .optionC(qReq.getOptionC())
+                        .optionD(qReq.getOptionD())
+                        .correctAnswer(qReq.getCorrectAnswer())
+                        .explanation(qReq.getExplanation())
+                        .build());
+            }
+        }
+
+        quiz = topicQuizRepository.save(quiz);
+
+        topic.setHasQuiz(true);
+        topicRepository.save(topic);
+
+        return mapQuizToResponse(quiz);
+    }
+
+    @Transactional(readOnly = true)
+    public TopicQuizResponse getQuiz(UUID topicId) {
+        TopicQuiz quiz = topicQuizRepository.findByTopicId(topicId)
+                .orElseThrow(() -> new EgramException("Quiz not found for this topic", HttpStatus.NOT_FOUND));
+        return mapQuizToResponse(quiz);
+    }
+
+    private TopicQuizResponse mapQuizToResponse(TopicQuiz quiz) {
+        List<TopicQuestionResponse> questions = quiz.getQuestions().stream()
+                .map(q -> TopicQuestionResponse.builder()
+                        .id(q.getId())
+                        .question(q.getQuestion())
+                        .optionA(q.getOptionA())
+                        .optionB(q.getOptionB())
+                        .optionC(q.getOptionC())
+                        .optionD(q.getOptionD())
+                        .correctAnswer(q.getCorrectAnswer())
+                        .explanation(q.getExplanation())
+                        .build())
+                .collect(Collectors.toList());
+
+        return TopicQuizResponse.builder()
+                .id(quiz.getId())
+                .title(quiz.getTitle())
+                .passingPercentage(quiz.getPassingPercentage())
+                .maxAttempts(quiz.getMaxAttempts())
+                .questions(questions)
+                .build();
+    }
+
+    // --- Progress APIs ---
+
+    @Transactional
+    public TopicProgressResponse getTopicProgress(UUID topicId) {
+        User student = getCurrentUser();
+        TopicProgress tp = topicProgressRepository.findByTopicIdAndStudentId(topicId, student.getId())
+                .orElse(createInitialTopicProgress(topicId, student));
+        return mapTopicProgressToResponse(tp);
+    }
+
+    private TopicProgress createInitialTopicProgress(UUID topicId, User student) {
+        Topic topic = topicRepository.findById(topicId)
+                .orElseThrow(() -> new EgramException("Topic not found", HttpStatus.NOT_FOUND));
+        TopicProgress tp = TopicProgress.builder()
+                .student(student)
+                .topic(topic)
+                .build();
+        return topicProgressRepository.save(tp);
+    }
+
+    private TopicProgressResponse mapTopicProgressToResponse(TopicProgress tp) {
+        return TopicProgressResponse.builder()
+                .id(tp.getId())
+                .topicId(tp.getTopic().getId())
+                .reelsCompleted(tp.getReelsCompleted())
+                .videoCompleted(tp.getVideoCompleted())
+                .quizUnlocked(tp.getQuizUnlocked())
+                .quizCompleted(tp.getQuizCompleted())
+                .topicCompleted(tp.getTopicCompleted())
+                .completedAt(tp.getCompletedAt())
+                .build();
+    }
+
+    @Transactional
+    public TopicProgressResponse updateReelProgress(UUID topicId, ReelProgressRequest request) {
+        User student = getCurrentUser();
+        Topic topic = topicRepository.findById(topicId)
+                .orElseThrow(() -> new EgramException("Topic not found", HttpStatus.NOT_FOUND));
+        Real reel = realRepository.findById(request.getReelId())
+                .orElseThrow(() -> new EgramException("Reel not found", HttpStatus.NOT_FOUND));
+
+        TopicReelProgress trp = topicReelProgressRepository.findByTopicIdAndReelIdAndStudentId(topicId, reel.getId(), student.getId())
+                .orElse(TopicReelProgress.builder()
+                        .student(student)
+                        .topic(topic)
+                        .reel(reel)
+                        .build());
+
+        trp.setWatchPercentage(Math.max(trp.getWatchPercentage(), request.getWatchPercentage()));
+        
+        if (trp.getWatchPercentage() >= 90 && !trp.getCompleted()) {
+            trp.setCompleted(true);
+            trp.setCompletedAt(java.time.LocalDateTime.now());
+        }
+        topicReelProgressRepository.save(trp);
+
+        TopicProgress tp = topicProgressRepository.findByTopicIdAndStudentId(topicId, student.getId())
+                .orElse(createInitialTopicProgress(topicId, student));
+
+        // Check if all reels are completed
+        List<TopicReel> allReels = topicReelRepository.findByTopicIdOrderByReelOrder(topicId);
+        List<TopicReelProgress> completedReels = topicReelProgressRepository.findByTopicIdAndStudentId(topicId, student.getId())
+                .stream().filter(TopicReelProgress::getCompleted).toList();
+
+        if (allReels.size() > 0 && completedReels.size() >= allReels.size()) {
+            tp.setReelsCompleted(true);
+            tp.setQuizUnlocked(true);
+            topicProgressRepository.save(tp);
+            checkTopicCompletion(tp);
+        }
+
+        return mapTopicProgressToResponse(tp);
+    }
+
+    @Transactional
+    public QuizAttemptResponse submitQuiz(UUID topicId, QuizSubmitRequest request) {
+        User student = getCurrentUser();
+        TopicQuiz quiz = topicQuizRepository.findByTopicId(topicId)
+                .orElseThrow(() -> new EgramException("Quiz not found", HttpStatus.NOT_FOUND));
+        TopicProgress tp = topicProgressRepository.findByTopicIdAndStudentId(topicId, student.getId())
+                .orElseThrow(() -> new EgramException("No progress found. Watch a learning path first.", HttpStatus.BAD_REQUEST));
+
+        if (!tp.getQuizUnlocked()) {
+            throw new EgramException("Quiz is locked. Complete a learning path first.", HttpStatus.BAD_REQUEST);
+        }
+
+        List<TopicQuizAttempt> previousAttempts = topicQuizAttemptRepository.findByQuizIdAndStudentIdOrderBySubmittedAtDesc(quiz.getId(), student.getId());
+        if (previousAttempts.size() >= quiz.getMaxAttempts()) {
+            throw new EgramException("Maximum attempts reached for this quiz.", HttpStatus.BAD_REQUEST);
+        }
+
+        int correctAnswers = 0;
+        int totalQuestions = quiz.getQuestions().size();
+
+        for (TopicQuestion q : quiz.getQuestions()) {
+            String studentAnswer = request.getAnswers().get(q.getId());
+            if (studentAnswer != null && studentAnswer.equalsIgnoreCase(q.getCorrectAnswer())) {
+                correctAnswers++;
+            }
+        }
+
+        int score = totalQuestions > 0 ? (int) Math.round(((double) correctAnswers / totalQuestions) * 100) : 0;
+        boolean passed = score >= quiz.getPassingPercentage();
+
+        TopicQuizAttempt attempt = TopicQuizAttempt.builder()
+                .student(student)
+                .quiz(quiz)
+                .totalQuestions(totalQuestions)
+                .correctAnswers(correctAnswers)
+                .score(score)
+                .passed(passed)
+                .submittedAt(java.time.LocalDateTime.now())
+                .build();
+
+        attempt = topicQuizAttemptRepository.save(attempt);
+
+        if (passed && !tp.getQuizCompleted()) {
+            tp.setQuizCompleted(true);
+            topicProgressRepository.save(tp);
+            checkTopicCompletion(tp);
+        }
+
+        return QuizAttemptResponse.builder()
+                .id(attempt.getId())
+                .totalQuestions(attempt.getTotalQuestions())
+                .correctAnswers(attempt.getCorrectAnswers())
+                .score(attempt.getScore())
+                .passed(attempt.getPassed())
+                .submittedAt(attempt.getSubmittedAt())
+                .build();
+    }
+
+    private void checkTopicCompletion(TopicProgress tp) {
+        if (!tp.getTopicCompleted() && (tp.getReelsCompleted() || tp.getVideoCompleted()) && tp.getQuizCompleted()) {
+            tp.setTopicCompleted(true);
+            tp.setCompletedAt(java.time.LocalDateTime.now());
+            topicProgressRepository.save(tp);
+
+            // Update course progress dynamically
+            updateCourseProgress(tp.getTopic().getModule().getCourse(), tp.getStudent());
+        }
+    }
+
+    private void updateCourseProgress(Course course, User student) {
+        CourseProgress cp = courseProgressRepository.findByCourseIdAndStudentId(course.getId(), student.getId())
+                .orElse(CourseProgress.builder()
+                        .student(student)
+                        .course(course)
+                        .build());
+        
+        List<TopicProgress> topicProgressList = topicProgressRepository.findByTopicModuleCourseIdAndStudentId(course.getId(), student.getId());
+        long completedTopicsCount = topicProgressList.stream().filter(TopicProgress::getTopicCompleted).count();
+        long totalTopicsCount = course.getModules().stream().flatMap(m -> m.getTopics().stream()).count();
+
+        if (completedTopicsCount >= totalTopicsCount && totalTopicsCount > 0 && !cp.getCompleted()) {
+            cp.setCompleted(true);
+            cp.setCompletedAt(java.time.LocalDateTime.now());
+        }
+        courseProgressRepository.save(cp);
     }
 
     private CourseResponse mapToResponse(Course course, User currentUser) {

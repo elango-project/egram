@@ -109,6 +109,46 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getTopic(id));
     }
 
+    // --- Quiz & Progress APIs (Admin) ---
+
+    @PostMapping("/topics/{topicId}/quiz")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<TopicQuizResponse> createOrUpdateQuiz(
+            @PathVariable UUID topicId,
+            @Valid @RequestBody TopicQuizRequest request) {
+        return ResponseEntity.ok(courseService.createOrUpdateQuiz(topicId, request));
+    }
+
+    // --- Quiz & Progress APIs (Student & Shared) ---
+
+    @GetMapping("/topics/{topicId}/quiz")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<TopicQuizResponse> getQuiz(@PathVariable UUID topicId) {
+        return ResponseEntity.ok(courseService.getQuiz(topicId));
+    }
+
+    @PostMapping("/topics/{topicId}/quiz/submit")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    public ResponseEntity<QuizAttemptResponse> submitQuiz(
+            @PathVariable UUID topicId,
+            @Valid @RequestBody QuizSubmitRequest request) {
+        return ResponseEntity.ok(courseService.submitQuiz(topicId, request));
+    }
+
+    @GetMapping("/topics/{topicId}/progress")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    public ResponseEntity<TopicProgressResponse> getTopicProgress(@PathVariable UUID topicId) {
+        return ResponseEntity.ok(courseService.getTopicProgress(topicId));
+    }
+
+    @PostMapping("/topics/{topicId}/progress/reel")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    public ResponseEntity<TopicProgressResponse> updateReelProgress(
+            @PathVariable UUID topicId,
+            @Valid @RequestBody ReelProgressRequest request) {
+        return ResponseEntity.ok(courseService.updateReelProgress(topicId, request));
+    }
+
     // --- Student Endpoints ---
 
     @PostMapping("/{id}/enroll")

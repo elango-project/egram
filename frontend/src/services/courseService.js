@@ -17,6 +17,31 @@ const courseService = {
     return response.data;
   },
 
+  getQuiz: async (topicId) => {
+    const response = await axiosInstance.get(`/courses/topics/${topicId}/quiz`);
+    return response.data;
+  },
+
+  createOrUpdateQuiz: async (topicId, data) => {
+    const response = await axiosInstance.post(`/courses/topics/${topicId}/quiz`, data);
+    return response.data;
+  },
+
+  submitQuiz: async (topicId, data) => {
+    const response = await axiosInstance.post(`/courses/topics/${topicId}/quiz/submit`, data);
+    return response.data;
+  },
+
+  getTopicProgress: async (topicId) => {
+    const response = await axiosInstance.get(`/courses/topics/${topicId}/progress`);
+    return response.data;
+  },
+
+  updateReelProgress: async (topicId, data) => {
+    const response = await axiosInstance.post(`/courses/topics/${topicId}/progress/reel`, data);
+    return response.data;
+  },
+
   enrollCourse: async (id) => {
     const response = await axiosInstance.post(`/courses/${id}/enroll`);
     return response.data;

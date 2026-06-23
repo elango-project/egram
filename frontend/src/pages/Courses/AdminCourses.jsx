@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import courseService from '../../services/courseService';
+import QuizBuilderModal from './QuizBuilderModal';
 
 const AdminCourses = () => {
   const [courses, setCourses] = useState([]);
@@ -19,6 +20,9 @@ const AdminCourses = () => {
   const [moduleTitle, setModuleTitle] = useState('');
   const [moduleType, setModuleType] = useState('REAL'); // REAL or VIDEO
   const [moduleContentId, setModuleContentId] = useState('');
+
+  // Quiz Builder state
+  const [activeQuizTopic, setActiveQuizTopic] = useState(null);
 
   useEffect(() => {
     fetchCourses();
@@ -287,20 +291,29 @@ const AdminCourses = () => {
                                 <span className="font-semibold text-gray-600 mr-2">{index + 1}.{tIndex + 1}</span>
                                 <span className="text-gray-800">{topic.title}</span>
                                 <span className="ml-2 text-xs text-gray-500">({topic.estimatedDurationMinutes || 0} mins)</span>
+                                {topic.hasQuiz && <span className="ml-2 bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-semibold">Quiz Added</span>}
                               </div>
-                              <button 
-                                onClick={async () => {
-                                  if (window.confirm('Delete topic?')) {
-                                    try {
-                                      await courseService.deleteTopic(topic.id);
-                                      handleSelectCourse(selectedCourse);
-                                    } catch(e) { toast.error('Failed to delete topic'); }
-                                  }
-                                }}
-                                className="text-red-400 hover:text-red-600"
-                              >
-                                ✕
-                              </button>
+                              <div className="flex gap-2">
+                                <button 
+                                  onClick={() => setActiveQuizTopic(topic)}
+                                  className="text-blue-500 hover:text-blue-700 text-xs font-semibold px-2 py-1 bg-blue-50 rounded"
+                                >
+                                  Manage Quiz
+                                </button>
+                                <button 
+                                  onClick={async () => {
+                                    if (window.confirm('Delete topic?')) {
+                                      try {
+                                        await courseService.deleteTopic(topic.id);
+                                        handleSelectCourse(selectedCourse);
+                                      } catch(e) { toast.error('Failed to delete topic'); }
+                                    }
+                                  }}
+                                  className="text-red-400 hover:text-red-600"
+                                >
+                                  ✕
+                                </button>
+                              </div>
                               
                               {/* Quick Learning Path (Reels) */}
                               <div className="w-full mt-3 bg-gray-50 p-3 rounded border border-gray-200">
@@ -403,6 +416,16 @@ const AdminCourses = () => {
           )}
         </div>
       </div>
+
+      {activeQuizTopic && (
+        <QuizBuilderModal 
+          topic={activeQuizTopic} 
+          onClose={() => {
+            setActiveQuizTopic(null);
+            handleSelectCourse(selectedCourse);
+          }} 
+        />
+      )}
     </div>
   );
 };
