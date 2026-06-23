@@ -301,6 +301,58 @@ const AdminCourses = () => {
                               >
                                 ✕
                               </button>
+                              
+                              {/* Quick Learning Path (Reels) */}
+                              <div className="w-full mt-3 bg-gray-50 p-3 rounded border border-gray-200">
+                                <h5 className="text-xs font-bold text-gray-700 mb-2">Quick Learning Path (Reels)</h5>
+                                
+                                {topic.reels?.length > 0 ? (
+                                  <ul className="space-y-1 mb-3">
+                                    {topic.reels.map(reel => (
+                                      <li key={reel.id} className="flex justify-between items-center text-xs bg-white p-1 border rounded">
+                                        <span className="truncate flex-1 mr-2">{reel.reelOrder}. {reel.title}</span>
+                                        <button 
+                                          onClick={async () => {
+                                            try {
+                                              await courseService.deleteTopicReel(topic.id, reel.reelId);
+                                              handleSelectCourse(selectedCourse);
+                                            } catch (e) { toast.error('Failed to remove reel'); }
+                                          }}
+                                          className="text-red-400 hover:text-red-600 font-bold px-1"
+                                        >
+                                          x
+                                        </button>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-xs text-gray-500 italic mb-2">No reels attached yet.</p>
+                                )}
+
+                                <form onSubmit={async (e) => {
+                                  e.preventDefault();
+                                  const reelId = e.target.reelId.value;
+                                  if (!reelId) return;
+                                  setLoading(true);
+                                  try {
+                                    await courseService.addTopicReel(topic.id, {
+                                      reelId,
+                                      reelOrder: (topic.reels?.length || 0) + 1
+                                    });
+                                    e.target.reset();
+                                    handleSelectCourse(selectedCourse);
+                                  } catch (err) {
+                                    toast.error('Failed to attach reel');
+                                  } finally {
+                                    setLoading(false);
+                                  }
+                                }} className="flex gap-2">
+                                  <input type="text" name="reelId" placeholder="Reel UUID" required className="flex-1 border rounded px-2 py-1 text-xs" />
+                                  <button type="submit" disabled={loading} className="bg-purple-600 text-white px-2 py-1 rounded text-xs hover:bg-purple-700 disabled:opacity-50">
+                                    Attach Reel
+                                  </button>
+                                </form>
+                              </div>
                             </li>
                           ))}
                         </ul>

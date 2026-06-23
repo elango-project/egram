@@ -92,6 +92,32 @@ export default function CourseDetail() {
                           {topic.description && (
                             <p className="text-xs text-[var(--text-secondary)] mt-1 ml-7">{topic.description}</p>
                           )}
+                          
+                          {/* Quick Learning Path (Reels) Display */}
+                          {topic.reels?.length > 0 && (
+                            <div className="mt-3 ml-7 bg-[var(--bg-card)] rounded p-3 border border-[var(--border)]">
+                              <h5 className="text-xs font-bold text-purple-400 mb-2">Quick Learning Path</h5>
+                              <ul className="space-y-2">
+                                {topic.reels.map((reel) => (
+                                  <li key={reel.id} className="flex flex-col md:flex-row md:items-center gap-3 bg-[var(--bg-secondary)] p-2 rounded">
+                                    {reel.thumbnailUrl && (
+                                      <img src={reel.thumbnailUrl} alt={reel.title} className="w-16 h-9 object-cover rounded shadow-sm" />
+                                    )}
+                                    <div className="flex-1">
+                                      <span className="text-xs font-semibold">{reel.reelOrder}. {reel.title}</span>
+                                    </div>
+                                    <a 
+                                      href={`/courses/topic/${topic.id}`} 
+                                      className="btn btn-ghost btn-sm text-xs mt-2 md:mt-0 px-2 py-1"
+                                    >
+                                      <Play size={12} className="text-cyan-400 mr-1" />
+                                      View Learning Path
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       ))}
                       {(!mod.topics || mod.topics.length === 0) && (

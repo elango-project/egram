@@ -12,6 +12,11 @@ const courseService = {
     return response.data;
   },
 
+  getTopic: async (id) => {
+    const response = await axiosInstance.get(`/courses/topics/${id}`);
+    return response.data;
+  },
+
   enrollCourse: async (id) => {
     const response = await axiosInstance.post(`/courses/${id}/enroll`);
     return response.data;
@@ -55,6 +60,16 @@ const courseService = {
 
   deleteTopic: async (topicId) => {
     const response = await axiosInstance.delete(`/courses/topics/${topicId}`);
+    return response.data;
+  },
+
+  addTopicReel: async (topicId, data) => {
+    const response = await axiosInstance.post(`/courses/topics/${topicId}/reels`, data);
+    return response.data;
+  },
+
+  deleteTopicReel: async (topicId, reelId) => {
+    const response = await axiosInstance.delete(`/courses/topics/${topicId}/reels/${reelId}`);
     return response.data;
   }
 };

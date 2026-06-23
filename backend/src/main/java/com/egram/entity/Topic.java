@@ -37,4 +37,27 @@ public class Topic {
     @Column(name = "topic_order", nullable = false)
     private Integer topicOrder;
 
+    @Column(name = "has_quick_learning_path", nullable = false)
+    @Builder.Default
+    private Boolean hasQuickLearningPath = false;
+
+    @Column(name = "has_deep_learning_path", nullable = false)
+    @Builder.Default
+    private Boolean hasDeepLearningPath = false;
+
+    @Column(name = "has_quiz", nullable = false)
+    @Builder.Default
+    private Boolean hasQuiz = false;
+
+    @Column(name = "has_assessment", nullable = false)
+    @Builder.Default
+    private Boolean hasAssessment = false;
+
+    @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<TopicReel> topicReels = new java.util.ArrayList<>();
+
+    @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<TopicVideo> topicVideos = new java.util.ArrayList<>();
 }

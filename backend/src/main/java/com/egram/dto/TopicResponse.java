@@ -17,4 +17,11 @@ public class TopicResponse {
     private String description;
     private Integer estimatedDurationMinutes;
     private Integer topicOrder;
+
+    private Boolean hasQuickLearningPath;
+    private Boolean hasDeepLearningPath;
+    private Boolean hasQuiz;
+    private Boolean hasAssessment;
+
+    private java.util.List<TopicReelResponse> reels;
 }

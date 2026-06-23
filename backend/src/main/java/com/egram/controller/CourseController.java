@@ -72,6 +72,23 @@ public class CourseController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/topics/{topicId}/reels")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<TopicReelResponse> addReelToTopic(
+            @PathVariable UUID topicId,
+            @Valid @RequestBody TopicReelRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(courseService.addReelToTopic(topicId, request));
+    }
+
+    @DeleteMapping("/topics/{topicId}/reels/{reelId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> removeReelFromTopic(
+            @PathVariable UUID topicId,
+            @PathVariable UUID reelId) {
+        courseService.removeReelFromTopic(topicId, reelId);
+        return ResponseEntity.noContent().build();
+    }
+
     // --- Authenticated / Shared Endpoints ---
 
     @GetMapping
@@ -84,6 +101,12 @@ public class CourseController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CourseResponse> getCourse(@PathVariable UUID id) {
         return ResponseEntity.ok(courseService.getCourse(id));
+    }
+
+    @GetMapping("/topics/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<TopicResponse> getTopic(@PathVariable UUID id) {
+        return ResponseEntity.ok(courseService.getTopic(id));
     }
 
     // --- Student Endpoints ---

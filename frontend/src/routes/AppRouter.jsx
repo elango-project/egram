@@ -16,6 +16,7 @@ import VideosPage from '../pages/Videos/VideosPage';
 import VideoPlayerView from '../pages/Videos/VideoPlayerView';
 
 import CoursesPage from '../pages/Courses/CoursesPage';
+import TopicView from '../pages/Courses/TopicView';
 import CertificatePage from '../pages/Courses/CertificatePage';
 import AssessmentsPage from '../pages/Assessments/AssessmentsPage';
 import JobsPage from '../pages/Jobs/JobsPage';
@@ -40,6 +41,7 @@ const AppRouter = () => {
             <Route path="/dashboard/videos" element={<VideosPage />} />
             <Route path="/dashboard/videos/:id" element={<VideoPlayerView />} />
             <Route path="/dashboard/courses" element={<CoursesPage />} />
+            <Route path="/courses/topic/:topicId" element={<TopicView />} />
             <Route path="/certificate/:courseId" element={<CertificatePage />} />
             <Route path="/dashboard/assessments" element={<AssessmentsPage />} />
             <Route path="/dashboard/jobs" element={<JobsPage />} />

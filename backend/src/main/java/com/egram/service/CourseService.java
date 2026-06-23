@@ -23,6 +23,8 @@ public class CourseService {
     private final CourseModuleRepository courseModuleRepository;
     private final CourseEnrollmentRepository courseEnrollmentRepository;
     private final TopicRepository topicRepository;
+    private final TopicReelRepository topicReelRepository;
+    private final RealRepository realRepository;
 
     private User getCurrentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -147,6 +149,74 @@ public class CourseService {
         topicRepository.deleteById(topicId);
     }
 
+    @Transactional
+    public TopicReelResponse addReelToTopic(UUID topicId, TopicReelRequest request) {
+        Topic topic = topicRepository.findById(topicId)
+                .orElseThrow(() -> new EgramException("Topic not found", HttpStatus.NOT_FOUND));
+
+        Real reel = realRepository.findById(request.getReelId())
+                .orElseThrow(() -> new EgramException("Reel not found", HttpStatus.NOT_FOUND));
+
+        if (topicReelRepository.findByTopicIdAndReelId(topicId, reel.getId()).isPresent()) {
+            throw new EgramException("Reel is already attached to this topic", HttpStatus.BAD_REQUEST);
+        }
+
+        TopicReel topicReel = TopicReel.builder()
+                .topic(topic)
+                .reel(reel)
+                .reelOrder(request.getReelOrder())
+                .build();
+
+        topicReel = topicReelRepository.save(topicReel);
+
+        return TopicReelResponse.builder()
+                .id(topicReel.getId())
+                .reelId(reel.getId())
+                .title(reel.getTitle())
+                .thumbnailUrl(reel.getThumbnailUrl())
+                .reelOrder(topicReel.getReelOrder())
+                .build();
+    }
+
+    @Transactional
+    public void removeReelFromTopic(UUID topicId, UUID reelId) {
+        TopicReel topicReel = topicReelRepository.findByTopicIdAndReelId(topicId, reelId)
+                .orElseThrow(() -> new EgramException("Reel not attached to this topic", HttpStatus.NOT_FOUND));
+        topicReelRepository.delete(topicReel);
+    }
+
+    // --- Authenticated / Shared ---
+
+    @Transactional(readOnly = true)
+    public TopicResponse getTopic(UUID topicId) {
+        Topic t = topicRepository.findById(topicId)
+                .orElseThrow(() -> new EgramException("Topic not found", HttpStatus.NOT_FOUND));
+        
+        List<TopicReelResponse> reelResponses = t.getTopicReels() != null ? t.getTopicReels().stream()
+                .sorted(java.util.Comparator.comparingInt(TopicReel::getReelOrder))
+                .map(tr -> TopicReelResponse.builder()
+                        .id(tr.getId())
+                        .reelId(tr.getReel().getId())
+                        .title(tr.getReel().getTitle())
+                        .thumbnailUrl(tr.getReel().getThumbnailUrl())
+                        .reelOrder(tr.getReelOrder())
+                        .build())
+                .collect(Collectors.toList()) : new java.util.ArrayList<>();
+
+        return TopicResponse.builder()
+            .id(t.getId())
+            .title(t.getTitle())
+            .description(t.getDescription())
+            .estimatedDurationMinutes(t.getEstimatedDurationMinutes())
+            .topicOrder(t.getTopicOrder())
+            .hasQuickLearningPath(t.getHasQuickLearningPath())
+            .hasDeepLearningPath(t.getHasDeepLearningPath())
+            .hasQuiz(t.getHasQuiz())
+            .hasAssessment(t.getHasAssessment())
+            .reels(reelResponses)
+            .build();
+    }
+
     // --- Authenticated / Student ---
 
     @Transactional(readOnly = true)
@@ -231,13 +301,31 @@ public class CourseService {
                 .map(m -> {
                     List<TopicResponse> topicResponses = m.getTopics() != null ? m.getTopics().stream()
                             .sorted(java.util.Comparator.comparingInt(Topic::getTopicOrder))
-                            .map(t -> TopicResponse.builder()
+                            .map(t -> {
+                                List<TopicReelResponse> reelResponses = t.getTopicReels() != null ? t.getTopicReels().stream()
+                                        .sorted(java.util.Comparator.comparingInt(TopicReel::getReelOrder))
+                                        .map(tr -> TopicReelResponse.builder()
+                                                .id(tr.getId())
+                                                .reelId(tr.getReel().getId())
+                                                .title(tr.getReel().getTitle())
+                                                .thumbnailUrl(tr.getReel().getThumbnailUrl())
+                                                .reelOrder(tr.getReelOrder())
+                                                .build())
+                                        .collect(Collectors.toList()) : new java.util.ArrayList<>();
+
+                                return TopicResponse.builder()
                                     .id(t.getId())
                                     .title(t.getTitle())
                                     .description(t.getDescription())
                                     .estimatedDurationMinutes(t.getEstimatedDurationMinutes())
                                     .topicOrder(t.getTopicOrder())
-                                    .build())
+                                    .hasQuickLearningPath(t.getHasQuickLearningPath())
+                                    .hasDeepLearningPath(t.getHasDeepLearningPath())
+                                    .hasQuiz(t.getHasQuiz())
+                                    .hasAssessment(t.getHasAssessment())
+                                    .reels(reelResponses)
+                                    .build();
+                            })
                             .collect(Collectors.toList()) : new java.util.ArrayList<>();
 
                     return CourseModuleResponse.builder()
