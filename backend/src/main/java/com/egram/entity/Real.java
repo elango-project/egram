@@ -39,10 +39,11 @@ public class Real {
     @Column(name = "category")
     private String category;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "real_tags", joinColumns = @JoinColumn(name = "real_id"))
     @Column(name = "tag")
-    private List<String> tags;
+    @Builder.Default
+    private List<String> tags = new java.util.ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by", nullable = false)

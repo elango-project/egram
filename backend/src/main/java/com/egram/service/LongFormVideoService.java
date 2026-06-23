@@ -63,6 +63,10 @@ public class LongFormVideoService {
             videoId = extractYoutubeVideoId(request.getVideoUrl());
         }
 
+        if (videoId == null) {
+            throw new EgramException("Invalid YouTube URL. Please provide a valid standard or Shorts URL.", HttpStatus.BAD_REQUEST);
+        }
+
         String finalVideoUrl = request.getYoutubeUrl() != null ? request.getYoutubeUrl() : request.getVideoUrl();
         String finalThumbnailUrl = request.getThumbnailUrl();
 
