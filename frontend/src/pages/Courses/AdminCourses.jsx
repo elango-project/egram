@@ -260,21 +260,83 @@ const AdminCourses = () => {
               </div>
 
               {/* List Modules */}
-              <h4 className="font-semibold mb-3">Existing Modules</h4>
-              <ul className="space-y-2">
+              <h4 className="font-semibold mb-3 mt-8 border-t pt-4">Existing Modules & Topics</h4>
+              <ul className="space-y-4">
                 {selectedCourse.modules?.map((mod, index) => (
-                  <li key={mod.id} className="flex justify-between items-center p-3 bg-gray-50 border rounded-md">
-                    <div>
-                      <span className="font-bold text-gray-700 mr-2">{index + 1}.</span>
-                      <span className="font-medium text-gray-900">{mod.title}</span>
-                      <span className="ml-2 text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded">{mod.type}</span>
+                  <li key={mod.id} className="p-4 bg-gray-50 border rounded-md shadow-sm">
+                    <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-200">
+                      <div>
+                        <span className="font-bold text-gray-700 mr-2">Module {index + 1}:</span>
+                        <span className="font-medium text-gray-900 text-lg">{mod.title}</span>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteModule(mod.id)}
+                        className="text-red-500 hover:text-red-700 text-sm font-medium"
+                      >
+                        Remove Module
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => handleDeleteModule(mod.id)}
-                      className="text-red-500 hover:text-red-700 text-sm"
-                    >
-                      Remove
-                    </button>
+
+                    {/* Topics List */}
+                    <div className="pl-6 space-y-2">
+                      {mod.topics?.length > 0 ? (
+                        <ul className="space-y-2 mb-4">
+                          {mod.topics.map((topic, tIndex) => (
+                            <li key={topic.id} className="flex justify-between items-center bg-white p-2 border rounded text-sm">
+                              <div>
+                                <span className="font-semibold text-gray-600 mr-2">{index + 1}.{tIndex + 1}</span>
+                                <span className="text-gray-800">{topic.title}</span>
+                                <span className="ml-2 text-xs text-gray-500">({topic.estimatedDurationMinutes || 0} mins)</span>
+                              </div>
+                              <button 
+                                onClick={async () => {
+                                  if (window.confirm('Delete topic?')) {
+                                    try {
+                                      await courseService.deleteTopic(topic.id);
+                                      handleSelectCourse(selectedCourse);
+                                    } catch(e) { toast.error('Failed to delete topic'); }
+                                  }
+                                }}
+                                className="text-red-400 hover:text-red-600"
+                              >
+                                ✕
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-xs text-gray-500 italic mb-4">No topics yet.</p>
+                      )}
+
+                      {/* Add Topic Quick Form */}
+                      <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        const title = e.target.topicTitle.value;
+                        const duration = e.target.topicDuration.value;
+                        if (!title) return;
+                        setLoading(true);
+                        try {
+                          await courseService.addTopic(mod.id, {
+                            title,
+                            description: '',
+                            estimatedDurationMinutes: parseInt(duration) || 0,
+                            topicOrder: (mod.topics?.length || 0) + 1
+                          });
+                          e.target.reset();
+                          handleSelectCourse(selectedCourse);
+                        } catch (err) {
+                          toast.error('Failed to add topic');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }} className="flex gap-2">
+                        <input type="text" name="topicTitle" placeholder="New Topic Title" required className="flex-1 border rounded px-2 py-1 text-sm" />
+                        <input type="number" name="topicDuration" placeholder="Mins" className="w-20 border rounded px-2 py-1 text-sm" />
+                        <button type="submit" disabled={loading} className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:opacity-50">
+                          + Topic
+                        </button>
+                      </form>
+                    </div>
                   </li>
                 ))}
                 {(!selectedCourse.modules || selectedCourse.modules.length === 0) && (

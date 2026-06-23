@@ -22,6 +22,7 @@ public class CourseService {
     private final CourseRepository courseRepository;
     private final CourseModuleRepository courseModuleRepository;
     private final CourseEnrollmentRepository courseEnrollmentRepository;
+    private final TopicRepository topicRepository;
 
     private User getCurrentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -114,6 +115,38 @@ public class CourseService {
         courseModuleRepository.deleteById(moduleId);
     }
 
+    @Transactional
+    public TopicResponse addTopic(UUID moduleId, TopicRequest request) {
+        CourseModule module = courseModuleRepository.findById(moduleId)
+                .orElseThrow(() -> new EgramException("Course module not found", HttpStatus.NOT_FOUND));
+
+        Topic topic = Topic.builder()
+                .module(module)
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .estimatedDurationMinutes(request.getEstimatedDurationMinutes())
+                .topicOrder(request.getTopicOrder())
+                .build();
+
+        topic = topicRepository.save(topic);
+
+        return TopicResponse.builder()
+                .id(topic.getId())
+                .title(topic.getTitle())
+                .description(topic.getDescription())
+                .estimatedDurationMinutes(topic.getEstimatedDurationMinutes())
+                .topicOrder(topic.getTopicOrder())
+                .build();
+    }
+
+    @Transactional
+    public void removeTopic(UUID topicId) {
+        if (!topicRepository.existsById(topicId)) {
+            throw new EgramException("Topic not found", HttpStatus.NOT_FOUND);
+        }
+        topicRepository.deleteById(topicId);
+    }
+
     // --- Authenticated / Student ---
 
     @Transactional(readOnly = true)
@@ -195,13 +228,27 @@ public class CourseService {
         }
 
         List<CourseModuleResponse> modules = course.getModules().stream()
-                .map(m -> CourseModuleResponse.builder()
+                .map(m -> {
+                    List<TopicResponse> topicResponses = m.getTopics() != null ? m.getTopics().stream()
+                            .sorted(java.util.Comparator.comparingInt(Topic::getTopicOrder))
+                            .map(t -> TopicResponse.builder()
+                                    .id(t.getId())
+                                    .title(t.getTitle())
+                                    .description(t.getDescription())
+                                    .estimatedDurationMinutes(t.getEstimatedDurationMinutes())
+                                    .topicOrder(t.getTopicOrder())
+                                    .build())
+                            .collect(Collectors.toList()) : new java.util.ArrayList<>();
+
+                    return CourseModuleResponse.builder()
                         .id(m.getId())
                         .title(m.getTitle())
                         .moduleOrder(m.getModuleOrder())
                         .realId(m.getRealId())
                         .longFormVideoId(m.getLongFormVideoId())
-                        .build())
+                        .topics(topicResponses)
+                        .build();
+                })
                 .collect(Collectors.toList());
 
         return CourseResponse.builder()

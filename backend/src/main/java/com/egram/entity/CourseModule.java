@@ -36,4 +36,8 @@ public class CourseModule {
 
     @Column(name = "long_form_video_id")
     private UUID longFormVideoId;
+
+    @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<Topic> topics = new java.util.ArrayList<>();
 }

@@ -11,11 +11,10 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CourseModuleResponse {
+public class TopicResponse {
     private UUID id;
     private String title;
-    private Integer moduleOrder;
-    private UUID realId;
-    private UUID longFormVideoId;
-    private java.util.List<TopicResponse> topics;
+    private String description;
+    private Integer estimatedDurationMinutes;
+    private Integer topicOrder;
 }

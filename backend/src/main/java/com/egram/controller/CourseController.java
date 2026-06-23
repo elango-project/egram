@@ -57,6 +57,21 @@ public class CourseController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/modules/{moduleId}/topics")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<TopicResponse> addTopic(
+            @PathVariable UUID moduleId,
+            @Valid @RequestBody TopicRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(courseService.addTopic(moduleId, request));
+    }
+
+    @DeleteMapping("/topics/{topicId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> removeTopic(@PathVariable UUID topicId) {
+        courseService.removeTopic(topicId);
+        return ResponseEntity.noContent().build();
+    }
+
     // --- Authenticated / Shared Endpoints ---
 
     @GetMapping

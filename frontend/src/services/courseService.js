@@ -44,7 +44,17 @@ const courseService = {
   },
 
   deleteModule: async (courseId, moduleId) => {
-    const response = await axiosInstance.delete(`/courses/${courseId}/modules/${moduleId}`);
+    const response = await axiosInstance.delete(`/courses/modules/${moduleId}`);
+    return response.data;
+  },
+
+  addTopic: async (moduleId, data) => {
+    const response = await axiosInstance.post(`/courses/modules/${moduleId}/topics`, data);
+    return response.data;
+  },
+
+  deleteTopic: async (topicId) => {
+    const response = await axiosInstance.delete(`/courses/topics/${topicId}`);
     return response.data;
   }
 };

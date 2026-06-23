@@ -74,25 +74,31 @@ export default function CourseDetail() {
                       {idx + 1}
                     </div>
                     <span className="font-semibold text-sm flex-1">{mod.title}</span>
-                    <span className="text-xs text-[var(--text-muted)]">{mod.videos?.length || 0} videos</span>
+                    <span className="text-xs text-[var(--text-muted)]">{mod.topics?.length || 0} topics</span>
                     {expanded === mod.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                   </button>
                   {expanded === mod.id && (
                     <div className="border-t border-[var(--border)]">
-                      {(mod.videos || []).map(video => (
-                        <div key={video.id}
-                             className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--bg-card-hover)] transition-colors border-b border-[var(--border)] last:border-0">
-                          <Play size={14} className="text-cyan-400 flex-shrink-0" />
-                          <span className="text-sm flex-1">{video.title}</span>
-                          <button
-                            className="btn btn-ghost btn-sm text-xs"
-                            onClick={() => handleAiSummary(video)}
-                            disabled={aiLoading}>
-                            <Sparkles size={12} className="text-yellow-400" />
-                            AI Summary
-                          </button>
+                      {(mod.topics || []).map((topic, tIdx) => (
+                        <div key={topic.id}
+                             className="flex flex-col px-4 py-3 hover:bg-[var(--bg-card-hover)] transition-colors border-b border-[var(--border)] last:border-0">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-gray-500 w-4">{tIdx + 1}.</span>
+                            <span className="text-sm font-semibold flex-1">{topic.title}</span>
+                            <span className="text-xs text-[var(--text-muted)] bg-[var(--bg-secondary)] px-2 py-1 rounded">
+                              {topic.estimatedDurationMinutes || 0} mins
+                            </span>
+                          </div>
+                          {topic.description && (
+                            <p className="text-xs text-[var(--text-secondary)] mt-1 ml-7">{topic.description}</p>
+                          )}
                         </div>
                       ))}
+                      {(!mod.topics || mod.topics.length === 0) && (
+                        <div className="px-4 py-3 text-xs text-[var(--text-muted)] italic text-center">
+                          No topics added to this module yet.
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
