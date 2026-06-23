@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import realService from '../../services/realService';
-import YouTube from 'react-youtube';
+import RealCard from '../../components/Reals/RealCard';
 
 const StudentReals = () => {
   const [reals, setReals] = useState([]);
@@ -8,6 +8,7 @@ const StudentReals = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [fetchingMore, setFetchingMore] = useState(false);
+  const [activeRealId, setActiveRealId] = useState(null);
   const [activeCommentsRealId, setActiveCommentsRealId] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -27,8 +28,8 @@ const StudentReals = () => {
     if (node) observer.current.observe(node);
   }, [loading, fetchingMore, hasMore]);
 
-  // View Tracking Observer
-  const viewObserver = useRef(null);
+  // Active Reel tracking Observer
+  const activeObserver = useRef(null);
 
   useEffect(() => {
     fetchReals(0);
@@ -50,7 +51,14 @@ const StudentReals = () => {
         // deduplicate just in case
         const existingIds = new Set(prev.map(r => r.id));
         const newReals = data.content.filter(r => !existingIds.has(r.id));
-        return pageNumber === 0 ? data.content : [...prev, ...newReals];
+        const combined = pageNumber === 0 ? data.content : [...prev, ...newReals];
+        
+        // Auto-play the first reel initially if we have no active reel
+        if (pageNumber === 0 && combined.length > 0) {
+          setActiveRealId(combined[0].id);
+        }
+        
+        return combined;
       });
       setHasMore(!data.last);
     } catch (error) {
@@ -61,46 +69,24 @@ const StudentReals = () => {
     }
   };
 
-  // Setup View Tracking Intersection Observer
+  // Setup Active Reel tracking Intersection Observer
   useEffect(() => {
-    if (viewObserver.current) viewObserver.current.disconnect();
+    if (activeObserver.current) activeObserver.current.disconnect();
     
-    const viewedReels = new Set(JSON.parse(sessionStorage.getItem('viewedReels') || '[]'));
-    
-    viewObserver.current = new IntersectionObserver((entries) => {
+    activeObserver.current = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           const id = entry.target.dataset.id;
-          if (!viewedReels.has(id)) {
-            // Wait for 1 second of visibility
-            entry.target.viewTimeout = setTimeout(async () => {
-              try {
-                await realService.recordView(id);
-                viewedReels.add(id);
-                sessionStorage.setItem('viewedReels', JSON.stringify(Array.from(viewedReels)));
-                
-                // Optmistic update view count
-                setReals(prev => prev.map(r => r.id === id ? { ...r, viewCount: r.viewCount + 1 } : r));
-              } catch (err) {
-                console.error("View tracking failed", err);
-              }
-            }, 1000);
-          }
-        } else {
-          // Clear timeout if user scrolled past quickly
-          if (entry.target.viewTimeout) {
-            clearTimeout(entry.target.viewTimeout);
-            entry.target.viewTimeout = null;
-          }
+          setActiveRealId(id);
         }
       });
-    }, { threshold: 0.6 });
+    }, { threshold: 0.7 });
 
     const reelElements = document.querySelectorAll('.reel-item');
-    reelElements.forEach(el => viewObserver.current.observe(el));
+    reelElements.forEach(el => activeObserver.current.observe(el));
 
     return () => {
-      if (viewObserver.current) viewObserver.current.disconnect();
+      if (activeObserver.current) activeObserver.current.disconnect();
     };
   }, [reals]);
 
@@ -158,13 +144,6 @@ const StudentReals = () => {
     }
   };
 
-  const handleShare = (real) => {
-    const url = `${window.location.origin}/reals/${real.id}`;
-    navigator.clipboard.writeText(url).then(() => {
-      alert("Link copied to clipboard!");
-    });
-  };
-
   const openComments = async (id) => {
     setActiveCommentsRealId(id);
     try {
@@ -191,151 +170,106 @@ const StudentReals = () => {
   };
 
   if (loading && page === 0) {
-    return <div className="text-center py-12">Loading Reals...</div>;
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-black">
+        <div className="text-white text-xl animate-pulse">Loading Reels...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-md mx-auto space-y-8 pb-12">
-      <h2 className="text-2xl font-bold text-center mb-6">Reals Feed</h2>
+    <div className="bg-black w-full min-h-screen relative flex justify-center">
       
-      {reals.map((real, index) => {
-        const isLastElement = reals.length === index + 1;
-        return (
-          <div 
-            key={real.id} 
-            ref={isLastElement ? lastRealElementRef : null}
-            data-id={real.id}
-            className="reel-item bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 mb-8"
-          >
-            {/* Video Player */}
-            <div className="aspect-[9/16] bg-black relative flex items-center justify-center overflow-hidden">
-              {real.youtubeVideoId ? (
-                <YouTube
-                  videoId={real.youtubeVideoId}
-                  opts={{
-                    width: '100%',
-                    height: '100%',
-                    playerVars: {
-                      autoplay: 0,
-                      controls: 1,
-                      rel: 0,
-                      modestbranding: 1
-                    }
-                  }}
-                  className="w-full h-full min-h-[500px]"
-                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}
-                />
-              ) : (
-                <video
-                  src={real.videoUrl}
-                  className="max-h-full max-w-full object-contain"
-                  autoPlay
-                  loop muted playsInline
-                />
-              )}
-              
-              {/* Overlay Info (Only show if not playing YouTube, or we can overlay on top of youtube but it might block clicks. Let's place it below the video for now, or just keep overlay but pointer-events-none) */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
-                <h3 className="text-white font-bold text-lg">{real.title}</h3>
-                <p className="text-gray-200 text-sm line-clamp-2">{real.description}</p>
-                <div className="text-gray-300 text-xs mt-1 flex items-center gap-2">
-                  <span>@{real.uploaderName}</span>
-                  <span>•</span>
-                  <span>{real.viewCount || 0} views</span>
-                  {real.category && <span className="bg-blue-600/80 px-2 py-0.5 rounded text-white">{real.category}</span>}
-                </div>
-              </div>
+      {/* Feed Container */}
+      <div className="w-full sm:max-w-[500px] h-[100dvh] overflow-y-scroll snap-y snap-mandatory hide-scrollbar relative bg-black">
+        {reals.map((real, index) => {
+          const isLastElement = reals.length === index + 1;
+          return (
+            <div 
+              key={real.id} 
+              ref={isLastElement ? lastRealElementRef : null}
+            >
+              <RealCard 
+                real={real} 
+                isActive={activeRealId === real.id}
+                onLike={handleLike}
+                onSave={handleSave}
+                onCommentClick={openComments}
+              />
             </div>
+          );
+        })}
 
-            {/* Action Bar */}
-            <div className="flex justify-between items-center p-4">
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => handleLike(real.id, real.liked)}
-                  className={`flex items-center gap-1 font-medium ${real.liked ? 'text-red-500' : 'text-gray-600 hover:text-red-500'}`}
-                >
-                  <span className="text-xl">{real.liked ? '❤️' : '🤍'}</span>
-                  <span>{real.likeCount || 0}</span>
-                </button>
-                
-                <button 
-                  onClick={() => openComments(real.id)}
-                  className="flex items-center gap-1 text-gray-600 hover:text-blue-500 font-medium"
-                >
-                  <span className="text-xl">💬</span>
-                  <span>{real.commentCount || 0}</span>
-                </button>
-                
-                <button 
-                  onClick={() => handleShare(real)}
-                  className="flex items-center gap-1 text-gray-600 hover:text-green-500 font-medium"
-                >
-                  <span className="text-xl">↗️</span>
-                </button>
-              </div>
-              
-              <button 
-                onClick={() => handleSave(real.id, real.saved)}
-                className={`font-medium ${real.saved ? 'text-blue-600' : 'text-gray-600 hover:text-blue-600'}`}
-              >
-                {real.saved ? 'Saved 📥' : 'Save 📩'}
-              </button>
-            </div>
+        {fetchingMore && (
+          <div className="h-20 flex items-center justify-center snap-start bg-black shrink-0">
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
-        );
-      })}
+        )}
 
-      {fetchingMore && <div className="text-center py-4">Loading more...</div>}
+        {!hasMore && reals.length > 0 && (
+          <div className="h-40 flex flex-col items-center justify-center snap-start bg-black text-gray-400 shrink-0">
+            <p className="text-sm">You've seen all the reels!</p>
+            <p className="text-xs mt-1">Check back later for more.</p>
+          </div>
+        )}
 
-      {!hasMore && reals.length > 0 && (
-        <div className="text-center text-gray-500 py-4">You've seen all the reels!</div>
-      )}
-
-      {reals.length === 0 && (
-        <div className="text-center py-16 px-4 bg-gray-50 rounded-2xl border border-gray-100">
-          <div className="text-5xl mb-4">🎬</div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">No Reels Available Yet</h3>
-          <p className="text-gray-500">Be the first to upload content and share it with the world.</p>
-        </div>
-      )}
+        {reals.length === 0 && (
+          <div className="h-full flex flex-col items-center justify-center text-gray-400">
+            <div className="text-5xl mb-4">🎬</div>
+            <h3 className="text-xl font-bold text-white mb-2">No Reels Yet</h3>
+            <p className="text-sm">Be the first to upload content!</p>
+          </div>
+        )}
+      </div>
 
       {/* Comments Drawer (Modal) */}
       {activeCommentsRealId && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setActiveCommentsRealId(null)}></div>
-          <div className="bg-white w-full max-w-md mx-auto rounded-t-2xl shadow-2xl z-10 flex flex-col" style={{ height: '70vh' }}>
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="font-bold text-lg">Comments</h3>
-              <button onClick={() => setActiveCommentsRealId(null)} className="text-gray-500 hover:text-black">✕</button>
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setActiveCommentsRealId(null)}></div>
+          <div className="bg-gray-900 w-full sm:max-w-[500px] mx-auto rounded-t-2xl shadow-2xl z-10 flex flex-col border border-gray-800 border-b-0 transition-transform" style={{ height: '70vh' }}>
+            <div className="flex justify-between items-center p-4 border-b border-gray-800">
+              <h3 className="font-bold text-lg text-white">Comments</h3>
+              <button onClick={() => setActiveCommentsRealId(null)} className="text-gray-400 hover:text-white p-2">✕</button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {comments.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">No comments yet. Be the first to comment!</p>
+                <p className="text-center text-gray-500 py-8">No comments yet. Be the first!</p>
               ) : (
                 comments.map(c => (
-                  <div key={c.id} className="flex flex-col">
-                    <span className="font-semibold text-sm">{c.studentName}</span>
-                    <span className="text-gray-800">{c.comment}</span>
-                    <span className="text-xs text-gray-400 mt-1">{new Date(c.createdAt).toLocaleString()}</span>
+                  <div key={c.id} className="flex flex-col mb-4">
+                    <span className="font-semibold text-sm text-gray-300">{c.studentName}</span>
+                    <span className="text-white mt-1 text-sm">{c.comment}</span>
+                    <span className="text-xs text-gray-500 mt-1">{new Date(c.createdAt).toLocaleString()}</span>
                   </div>
                 ))
               )}
             </div>
 
-            <form onSubmit={handlePostComment} className="p-4 border-t flex gap-2">
+            <form onSubmit={handlePostComment} className="p-4 border-t border-gray-800 flex gap-2 bg-gray-900">
               <input 
                 type="text" 
                 value={newComment}
                 onChange={e => setNewComment(e.target.value)}
                 placeholder="Add a comment..." 
-                className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-full px-4 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
-              <button type="submit" disabled={!newComment.trim()} className="bg-blue-600 text-white px-4 py-2 rounded-full font-medium disabled:opacity-50">Post</button>
+              <button type="submit" disabled={!newComment.trim()} className="bg-blue-600 text-white px-5 py-2 rounded-full font-medium disabled:opacity-50 hover:bg-blue-700 transition-colors">Post</button>
             </form>
           </div>
         </div>
       )}
+      
+      {/* Hide scrollbar globally for the feed */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}} />
     </div>
   );
 };
