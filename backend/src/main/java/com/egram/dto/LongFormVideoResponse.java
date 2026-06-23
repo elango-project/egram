@@ -18,6 +18,7 @@ public class LongFormVideoResponse {
     private String description;
     private String videoUrl;
     private String thumbnailUrl;
+    private String youtubeVideoId;
     private String uploaderName;
     private UUID uploaderId;
     private LocalDateTime createdAt;

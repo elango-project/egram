@@ -17,8 +17,9 @@ public class LongFormVideoRequest {
 
     private String description;
 
-    @NotBlank(message = "Video URL is required")
     private String videoUrl;
 
     private String thumbnailUrl;
+
+    private String youtubeUrl;
 }

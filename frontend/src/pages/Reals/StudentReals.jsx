@@ -226,12 +226,12 @@ const StudentReals = () => {
                   style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}
                 />
               ) : (
-                <>
-                  <img src={real.thumbnailUrl} alt={real.title} className="w-full h-full object-cover opacity-80" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-white text-sm bg-black/50 px-3 py-1 rounded-full">Legacy Video: {real.videoUrl}</span>
-                  </div>
-                </>
+                <video
+                  src={real.videoUrl}
+                  className="max-h-full max-w-full object-contain"
+                  autoPlay
+                  loop muted playsInline
+                />
               )}
               
               {/* Overlay Info (Only show if not playing YouTube, or we can overlay on top of youtube but it might block clicks. Let's place it below the video for now, or just keep overlay but pointer-events-none) */}

@@ -32,6 +32,9 @@ public class LongFormVideo {
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
+    @Column(name = "youtube_video_id")
+    private String youtubeVideoId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by", nullable = false)
     private User uploadedBy;

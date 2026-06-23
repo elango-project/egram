@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import videoService from '../../services/videoService';
+import YouTube from 'react-youtube';
 
 const VideoPlayerView = () => {
   const { id } = useParams();
@@ -198,17 +199,38 @@ const VideoPlayerView = () => {
       <div className="flex-grow lg:w-2/3 xl:w-3/4">
         
         <div className="relative bg-black rounded-xl overflow-hidden aspect-video shadow-lg mb-4">
-          <video
-            ref={videoRef}
-            src={video.videoUrl}
-            poster={video.thumbnailUrl}
-            controls
-            autoPlay
-            onLoadedMetadata={handleLoadedMetadata}
-            onPause={handlePause}
-            onEnded={handleEnded}
-            className="w-full h-full object-contain"
-          />
+          {video.youtubeVideoId ? (
+            <YouTube
+              videoId={video.youtubeVideoId}
+              opts={{
+                width: '100%',
+                height: '100%',
+                playerVars: {
+                  autoplay: 0,
+                  controls: 1,
+                  rel: 0,
+                  modestbranding: 1
+                }
+              }}
+              className="w-full h-full"
+              style={{ width: '100%', height: '100%', display: 'flex' }}
+              onReady={handleLoadedMetadata}
+              onPause={handlePause}
+              onEnd={handleEnded}
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={video.videoUrl}
+              poster={video.thumbnailUrl}
+              controls
+              autoPlay
+              onLoadedMetadata={handleLoadedMetadata}
+              onPause={handlePause}
+              onEnded={handleEnded}
+              className="w-full h-full object-contain"
+            />
+          )}
 
           {/* Auto Play Overlay */}
           {showAutoPlay && (

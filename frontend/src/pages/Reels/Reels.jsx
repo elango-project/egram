@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { reelApi } from '../../api'
+import YouTube from 'react-youtube'
 import { Heart, MessageCircle, Share2, Play, Sparkles, X, Loader2, ChevronDown } from 'lucide-react'
 
 export default function Reels() {
@@ -59,13 +60,31 @@ export default function Reels() {
           reels.map((reel, idx) => (
             <div key={reel.id} className="reel-item flex">
               {/* Video area */}
-              <div className="flex-1 relative bg-black flex-center">
-                <video
-                  src={reel.videoUrl}
-                  className="max-h-full max-w-full object-contain"
-                  autoPlay={idx === activeReel}
-                  loop muted playsInline
-                />
+              <div className="flex-1 relative bg-black flex-center overflow-hidden">
+                {reel.youtubeVideoId ? (
+                  <YouTube
+                    videoId={reel.youtubeVideoId}
+                    opts={{
+                      width: '100%',
+                      height: '100%',
+                      playerVars: {
+                        autoplay: idx === activeReel ? 1 : 0,
+                        controls: 0,
+                        rel: 0,
+                        modestbranding: 1
+                      }
+                    }}
+                    className="w-full h-full min-h-[500px]"
+                    style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}
+                  />
+                ) : (
+                  <video
+                    src={reel.videoUrl}
+                    className="max-h-full max-w-full object-contain"
+                    autoPlay={idx === activeReel}
+                    loop muted playsInline
+                  />
+                )}
                 {/* Overlay info */}
                 <div className="absolute bottom-0 left-0 right-0 p-4"
                      style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>

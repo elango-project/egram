@@ -38,6 +38,17 @@ public class LongFormVideoService {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
+    private String extractYoutubeVideoId(String url) {
+        if (url == null || url.trim().isEmpty()) return null;
+        String pattern = "^(?:https?:\\/\\/)?(?:www\\.|m\\.)?(?:youtu\\.be\\/|youtube\\.com\\/(?:embed\\/|v\\/|watch\\?v=|watch\\?.+&v=|shorts\\/))((\\w|-){11})(?:\\S+)?$";
+        java.util.regex.Pattern compiledPattern = java.util.regex.Pattern.compile(pattern);
+        java.util.regex.Matcher matcher = compiledPattern.matcher(url);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
     private LongFormVideo getVideoOrThrow(UUID id) {
         return videoRepository.findById(id)
                 .orElseThrow(() -> new EgramException("Video not found", HttpStatus.NOT_FOUND));
@@ -46,11 +57,25 @@ public class LongFormVideoService {
     @Transactional
     public LongFormVideoResponse uploadVideo(LongFormVideoRequest request) {
         User admin = getCurrentUser();
+        
+        String videoId = extractYoutubeVideoId(request.getYoutubeUrl());
+        if (videoId == null && request.getVideoUrl() != null) {
+            videoId = extractYoutubeVideoId(request.getVideoUrl());
+        }
+
+        String finalVideoUrl = request.getYoutubeUrl() != null ? request.getYoutubeUrl() : request.getVideoUrl();
+        String finalThumbnailUrl = request.getThumbnailUrl();
+
+        if (finalThumbnailUrl == null && videoId != null) {
+            finalThumbnailUrl = "https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg";
+        }
+
         LongFormVideo video = LongFormVideo.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .videoUrl(request.getVideoUrl())
-                .thumbnailUrl(request.getThumbnailUrl())
+                .videoUrl(finalVideoUrl != null ? finalVideoUrl : "")
+                .thumbnailUrl(finalThumbnailUrl)
+                .youtubeVideoId(videoId)
                 .uploadedBy(admin)
                 .build();
         
@@ -333,6 +358,7 @@ public class LongFormVideoService {
                 .description(video.getDescription())
                 .videoUrl(video.getVideoUrl())
                 .thumbnailUrl(video.getThumbnailUrl())
+                .youtubeVideoId(video.getYoutubeVideoId())
                 .uploaderName(video.getUploadedBy().getFullName())
                 .uploaderId(video.getUploadedBy().getId())
                 .createdAt(video.getCreatedAt())
