@@ -1,23 +1,23 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuthStore } from '../../store/authStore'
+import { motion } from 'framer-motion'
 import {
   LayoutDashboard, BookOpen, Play, Brain, Briefcase,
-  CalendarDays, Cpu, FolderGit2, User, LogOut,
+  Award, TrendingUp, User, LogOut,
   Menu, GraduationCap, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const navItems = [
-  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/courses',      icon: BookOpen,        label: 'Courses' },
-  { to: '/reels',        icon: Play,            label: 'Reels' },
-  { to: '/mentor',       icon: Brain,           label: 'AI Mentor' },
-  { to: '/internships',  icon: Briefcase,       label: 'Internships' },
-  { to: '/events',       icon: CalendarDays,    label: 'Events' },
-  { to: '/ai-hub',       icon: Cpu,             label: 'AI Hub' },
-  { to: '/projects',     icon: FolderGit2,      label: 'Projects' },
-  { to: '/profile',      icon: User,            label: 'Profile' },
+  { to: '/dashboard',             icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/courses',               icon: BookOpen,        label: 'Courses' },
+  { to: '/reels',                 icon: Play,            label: 'Reels' },
+  { to: '/dashboard/certificates',icon: Award,           label: 'Certificates' },
+  { to: '/dashboard/jobs',        icon: Briefcase,       label: 'Jobs' },
+  { to: '/dashboard/internships', icon: Brain,           label: 'Internships' },
+  { to: '/dashboard/placement',   icon: TrendingUp,      label: 'Placement Hub' },
+  { to: '/profile',               icon: User,            label: 'Profile' },
 ]
 
 export default function AppLayout() {
@@ -64,16 +64,28 @@ export default function AppLayout() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-2 overflow-y-auto relative">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              className={({ isActive }) => `relative flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${isActive ? 'text-indigo-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
               onClick={() => setMobileOpen(false)}
             >
-              <Icon size={18} className="flex-shrink-0" />
-              {!collapsed && <span>{label}</span>}
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-nav-indicator"
+                      className="absolute inset-0 bg-indigo-50 border border-indigo-100 rounded-xl"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                  <Icon size={20} className={`relative z-10 ${isActive ? 'text-indigo-600' : 'text-slate-500'}`} />
+                  {!collapsed && <span className="relative z-10">{label}</span>}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>

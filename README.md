@@ -1,87 +1,118 @@
-# Educationgram 🎓
-**A Full-Stack EdTech Platform**
+# Egram V1.1 🚀
 
-Educationgram is a modern, full-stack educational platform designed to deliver an engaging learning experience through both long-form courses and short-form "Reels" content. Built with a robust Spring Boot backend and a dynamic React frontend, it features role-based access control, interactive assessments, a dedicated job portal, and advanced video tracking.
+Egram is a modern, comprehensive EdTech platform designed to bridge the gap between learning and employment. It features a premium, Notion-inspired learning workspace, an ATS-style placement hub, and an advanced administrative control center.
 
-## 🚀 Live Demo
-- **Frontend:** [https://egram-frontend.vercel.app] *[Update with real URL]*
-- **Backend API:** [https://egram-backend.onrender.com/api/swagger-ui.html] *[Update with real URL]*
-
-### Demo Accounts
-You can test the platform using the following pre-seeded demo accounts:
-* **Admin:** `admin@egram.com` (Password: `Password@123`)
-* **Student:** `student@egram.com` (Password: `Password@123`)
-
----
-
-## 🛠️ Tech Stack
-* **Frontend:** React, Vite, Tailwind CSS (optional/custom CSS), Context API
-* **Backend:** Java 21, Spring Boot 3.3, Spring Security (JWT), Hibernate/JPA
-* **Database:** PostgreSQL (Neon Serverless)
-* **Media Storage:** Cloudinary
-* **Deployment:** Vercel (Frontend), Render (Backend)
-
----
+![Egram Cover](https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1200)
 
 ## ✨ Key Features
-1. **Short-form & Long-form Content**
-   * TikTok/Instagram-style "Reels" for quick learning concepts.
-   * Comprehensive multi-module video courses.
-   * Automated video progress tracking (Resume from where you left off).
-2. **Course Management & Certification**
-   * Admins can create and manage courses with rich descriptions and thumbnails.
-   * Students enroll, track progress, and complete modules.
-3. **Assessments & Analytics**
-   * Time-bound online assessments for courses.
-   * Instant grading, attempt history, and analytics tracking (Pass rates, average scores).
-4. **Job Portal & Application Tracking**
-   * Built-in job/internship board with filtering (Remote, Onsite, Hybrid).
-   * Resume and Cover Letter submissions.
-   * Real-time application status tracking (Pending -> Shortlisted -> Selected).
-5. **Role-Based Access Control (RBAC)**
-   * Secure JWT authentication separating `ADMIN` and `STUDENT` privileges.
 
----
+### 🎓 Student Experience
+- **Premium Learning Workspace**: A Coursera-inspired learning environment with split-pane topic views, concept reels, and deep dive videos.
+- **Placement Hub**: A LinkedIn-style two-panel interface to browse jobs and internships with 1-click apply and slide-over application drawers.
+- **Interactive Assessments**: Real-time quiz builder and assessment tracking to unlock certificates.
+- **Gamified Progress**: Visual completion trackers, "watch" simulations for reels and videos, and a comprehensive unified dashboard.
 
-## 🏗️ Architecture
-The application follows a standard multi-tier REST API architecture:
-1. **Client Layer:** React SPA deployed on Vercel.
-2. **API Layer:** Spring Boot REST Controllers secured with stateless JWT filters.
-3. **Service Layer:** Business logic handling N+1 optimizations, analytics aggregation, and entity mapping.
-4. **Data Layer:** Spring Data JPA interfacing with a fully managed PostgreSQL database on Neon.
+### ⚙️ Admin Control Center
+- **Notion-Style Curriculum Builder**: Drag-and-drop course creation, module structuring, and content attachment using `@hello-pangea/dnd`.
+- **ATS Dashboard**: Manage incoming applications, jobs, and internships in a sleek, two-panel recruiter interface.
+- **Analytics Grid**: Centralized metrics powered by `recharts` to track student engagement, enrollments, and course completion.
 
----
+## 🛠 Tech Stack
 
-## 💻 Local Development Setup
+### Frontend
+- **Framework**: React 18
+- **Routing**: React Router DOM (Lazy Loaded & Suspense)
+- **Styling**: Vanilla CSS, Tailwind CSS (Design System)
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **Data Visualization**: Recharts
+- **Drag & Drop**: @hello-pangea/dnd
+- **HTTP Client**: Axios (with global error interceptors)
+- **Toast Notifications**: react-hot-toast
+- **Build Tool**: Vite
+
+### Backend (Java/Spring Boot)
+- **Framework**: Spring Boot 3
+- **Security**: Spring Security + JWT Authentication
+- **Database**: MySQL + Hibernate/JPA
+- **Architecture**: MVC Pattern (Controllers, Services, Repositories)
+
+## 📦 Project Architecture
+
+```
+├── backend/
+│   ├── src/main/java/com/egram/
+│   │   ├── config/       # Security & CORS configuration
+│   │   ├── controllers/  # REST APIs
+│   │   ├── models/       # JPA Entities
+│   │   ├── repositories/ # Spring Data JPA
+│   │   ├── security/     # JWT filters and auth providers
+│   │   └── service/      # Business logic and transactions
+│   └── pom.xml
+└── frontend/
+    ├── src/
+    │   ├── api/          # Axios instance and interceptors
+    │   ├── components/   # Reusable UI components (Buttons, Cards)
+    │   ├── context/      # React Context (Auth)
+    │   ├── pages/        # Route components (Home, Dashboard)
+    │   ├── services/     # Frontend API wrappers
+    │   ├── theme/        # Global animations and tokens
+    │   └── App.jsx       # Root layout & Error Boundary
+    └── package.json
+```
+
+## 🚀 Deployment Guide
 
 ### Prerequisites
-* Java 21+
-* Node.js 18+
-* PostgreSQL database (Local or Neon)
-* Cloudinary Account
+- Node.js (v18+)
+- Java 17+
+- MySQL Server
 
-### Backend Setup
-1. Navigate to the `backend` directory: `cd backend`
-2. Copy the example environment file: `cp .env.example .env`
-3. Fill in your PostgreSQL and JWT secrets in `.env`.
-4. Run the application:
-   ```bash
-   mvn clean spring-boot:run
-   ```
-   *The API will be available at `http://localhost:8080/api`*
+### 1. Database Setup
+Create a MySQL database named `egram_db`:
+```sql
+CREATE DATABASE egram_db;
+```
 
-### Frontend Setup
-1. Navigate to the `frontend` directory: `cd frontend`
-2. Install dependencies: `npm install`
-3. Start the dev server:
-   ```bash
-   npm run dev
-   ```
-   *The UI will be available at `http://localhost:5173`*
+### 2. Environment Variables
+
+**Backend (`backend/src/main/resources/application.properties`)**:
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/egram_db
+spring.datasource.username=root
+spring.datasource.password=yourpassword
+jwt.secret=your_super_secret_key_that_is_long_enough
+```
+
+**Frontend (`frontend/.env`)**:
+```env
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+### 3. Run Backend
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+### 4. Run Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Production Build
+```bash
+cd frontend
+npm run build
+npm run preview
+```
+
+## 🛡️ Security & Performance
+- **Route Protection**: Strict Role-Based Access Control (RBAC) preventing students from accessing admin panels and vice-versa.
+- **Code Splitting**: Routes are dynamically loaded to keep initial bundle size < 300KB.
+- **Error Boundaries**: Top-level React error boundaries to prevent app crashes.
 
 ---
-
-## 🛡️ API Documentation
-Once the backend is running, the interactive Swagger OpenAPI documentation is accessible at:
-* **Local:** `http://localhost:8080/api/swagger-ui.html`
-* **Production:** `<your-render-url>/api/swagger-ui.html`
+Built with ❤️ for modern education.

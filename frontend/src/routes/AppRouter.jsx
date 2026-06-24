@@ -1,43 +1,44 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import PublicLayout from '../layouts/PublicLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
 import ProtectedRoute from '../components/ProtectedRoute';
+import PageLoader from '../components/ui/PageLoader';
 
-import Home from '../pages/Home';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
-import Dashboard from '../pages/Dashboard';
-import NotFound from '../pages/NotFound';
-import RealsPage from '../pages/Reals/RealsPage';
-
-import VideosPage from '../pages/Videos/VideosPage';
-import VideoPlayerView from '../pages/Videos/VideoPlayerView';
-
-import CoursesPage from '../pages/Courses/CoursesPage';
-import CourseDetail from '../pages/Courses/CourseDetail';
-import TopicView from '../pages/Courses/TopicView';
-import AssessmentPage from '../pages/Courses/AssessmentPage';
-import CertificatePage from '../pages/Courses/CertificatePage';
-import AssessmentsPage from '../pages/Assessments/AssessmentsPage';
-import JobsPage from '../pages/Jobs/JobsPage';
-import InternshipsPage from '../pages/Jobs/InternshipsPage';
-import PlacementDashboard from '../pages/PlacementDashboard';
+// Lazy loading all pages for code splitting
+const Home = lazy(() => import('../pages/Home'));
+const Login = lazy(() => import('../pages/Login'));
+const Register = lazy(() => import('../pages/Register'));
+const Dashboard = lazy(() => import('../pages/Dashboard'));
+const NotFound = lazy(() => import('../pages/NotFound'));
+const RealsPage = lazy(() => import('../pages/Reals/RealsPage'));
+const VideosPage = lazy(() => import('../pages/Videos/VideosPage'));
+const VideoPlayerView = lazy(() => import('../pages/Videos/VideoPlayerView'));
+const CoursesPage = lazy(() => import('../pages/Courses/CoursesPage'));
+const CourseDetail = lazy(() => import('../pages/Courses/CourseDetail'));
+const TopicView = lazy(() => import('../pages/Courses/TopicView'));
+const AssessmentPage = lazy(() => import('../pages/Courses/AssessmentPage'));
+const CertificatePage = lazy(() => import('../pages/Courses/CertificatePage'));
+const AssessmentsPage = lazy(() => import('../pages/Assessments/AssessmentsPage'));
+const JobsPage = lazy(() => import('../pages/Jobs/JobsPage'));
+const InternshipsPage = lazy(() => import('../pages/Jobs/InternshipsPage'));
+const PlacementDashboard = lazy(() => import('../pages/PlacementDashboard'));
 
 const AppRouter = () => {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public Routes */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
 
-        {/* Protected Routes */}
+          {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
@@ -45,17 +46,22 @@ const AppRouter = () => {
             <Route path="/dashboard/videos" element={<VideosPage />} />
             <Route path="/dashboard/videos/:id" element={<VideoPlayerView />} />
             <Route path="/dashboard/courses" element={<CoursesPage />} />
-            <Route path="/courses/:id" element={<CourseDetail />} />
-            <Route path="/courses/topic/:topicId" element={<TopicView />} />
-            <Route path="/courses/:courseId/assessment" element={<AssessmentPage />} />
-            <Route path="/courses/:courseId/certificate" element={<CertificatePage />} />
             <Route path="/dashboard/assessments" element={<AssessmentsPage />} />
             <Route path="/dashboard/jobs" element={<JobsPage />} />
             <Route path="/dashboard/internships" element={<InternshipsPage />} />
-            <Route path="/dashboard/placement" element={<PlacementDashboard />} />
+
+            {/* Student Only Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['ROLE_STUDENT']} />}>
+              <Route path="/courses/:id" element={<CourseDetail />} />
+              <Route path="/courses/topic/:topicId" element={<TopicView />} />
+              <Route path="/courses/:courseId/assessment" element={<AssessmentPage />} />
+              <Route path="/courses/:courseId/certificate" element={<CertificatePage />} />
+              <Route path="/dashboard/placement" element={<PlacementDashboard />} />
+            </Route>
           </Route>
         </Route>
-      </Routes>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 };

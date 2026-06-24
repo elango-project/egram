@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import courseService from '../../services/courseService';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Printer, Download, Share2, Award, QrCode } from 'lucide-react';
+import Button from '../../components/ui/Button';
 
 const CertificatePage = () => {
   const { courseId } = useParams();
+  const navigate = useNavigate();
   const [certificate, setCertificate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,85 +31,166 @@ const CertificatePage = () => {
     fetchCertificate();
   }, [courseId]);
 
-  if (loading) return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin text-blue-600" size={48} /></div>;
+  if (loading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen bg-slate-50">
+        <Loader2 className="animate-spin text-indigo-600 mb-4" size={48} />
+        <p className="text-slate-500 font-medium">Loading your credential...</p>
+      </div>
+    );
+  }
   
   if (error || !certificate) return (
-    <div className="text-center py-20">
-      <h2 className="text-2xl text-red-600 font-bold mb-4">{error}</h2>
-      <Link to={`/courses/${courseId}`} className="text-blue-600 hover:underline">Return to Course</Link>
+    <div className="text-center py-20 flex flex-col items-center">
+      <h2 className="text-2xl text-slate-900 font-bold mb-2">Certificate Unavailable</h2>
+      <p className="text-slate-500 mb-6">{error}</p>
+      <Button onClick={() => navigate(`/dashboard/courses/${courseId}`)}>Return to Course</Button>
     </div>
   );
 
   const date = new Date(certificate.issuedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6 flex justify-between items-center print:hidden">
-          <Link to={`/courses/${courseId}`} className="text-blue-600 hover:underline font-medium">
-            &larr; Back to Course
-          </Link>
-          <button 
-            onClick={() => window.print()} 
-            className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 font-medium"
+    <div className="min-h-[calc(100vh-4rem)] bg-slate-100 py-8 px-4 sm:px-6 lg:px-8 flex flex-col">
+      <style>
+        {`
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            .certificate-container, .certificate-container * {
+              visibility: visible;
+            }
+            .certificate-container {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              margin: 0;
+              padding: 0;
+              box-shadow: none !important;
+            }
+            @page {
+              size: landscape;
+              margin: 0;
+            }
+          }
+        `}
+      </style>
+
+      <div className="max-w-6xl mx-auto w-full">
+        {/* Action Bar (Hidden when printing) */}
+        <div className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate(`/dashboard/courses/${courseId}`)}
+            icon={<ArrowLeft size={18} />}
           >
-            🖨️ Print / Save as PDF
-          </button>
+            Back to Course
+          </Button>
+          
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => window.print()}
+              icon={<Printer size={18} />}
+            >
+              Print
+            </Button>
+            <Button 
+              variant="outline"
+              icon={<Download size={18} />}
+            >
+              PDF
+            </Button>
+            <Button 
+              className="bg-[#0A66C2] hover:bg-[#084e96] text-white border-none"
+              icon={<Share2 size={18} />}
+            >
+              Add to LinkedIn
+            </Button>
+          </div>
         </div>
 
         {/* Certificate Container */}
-        <div className="bg-white p-12 border-[16px] border-double border-blue-900 shadow-2xl relative text-center print:shadow-none print:border-8">
+        <div className="certificate-container bg-white p-4 sm:p-8 md:p-12 shadow-2xl rounded-sm aspect-[1.414/1] relative overflow-hidden mx-auto max-w-5xl text-center border border-slate-200">
+          {/* Gold Decorative Border */}
+          <div className="absolute inset-4 sm:inset-6 border-[8px] sm:border-[12px] border-double border-[#D4AF37] pointer-events-none z-10" />
+          <div className="absolute inset-2 sm:inset-3 border border-[#D4AF37] pointer-events-none z-10" />
+          <div className="absolute inset-7 sm:inset-10 border border-[#D4AF37]/50 pointer-events-none z-10" />
           
-          <div className="absolute top-8 right-8 text-gray-500 font-mono text-sm text-right">
-            <div>Certificate No: <span className="font-bold text-gray-800">{certificate.certificateNumber}</span></div>
-            <div>Verify Code: <span className="font-bold text-gray-800">{certificate.verificationCode}</span></div>
+          {/* Background Elements */}
+          <div className="absolute top-0 left-0 w-full h-full opacity-[0.03] pointer-events-none flex items-center justify-center -z-10">
+            <Award size={600} />
           </div>
 
-          <div className="mt-12 mb-6">
-            <h1 className="text-5xl font-serif text-blue-900 font-bold tracking-widest uppercase">Certificate of Completion</h1>
-          </div>
-
-          <div className="mb-8">
-            <p className="text-xl text-gray-600 italic font-serif">This is to certify that</p>
-          </div>
-
-          <div className="mb-8 border-b-2 border-gray-300 mx-auto w-2/3 pb-2">
-            <h2 className="text-4xl font-bold text-gray-800">{certificate.studentName}</h2>
-          </div>
-
-          <div className="mb-8">
-            <p className="text-xl text-gray-600 italic font-serif">has successfully completed the course</p>
-          </div>
-
-          <div className="mb-12">
-            <h3 className="text-3xl font-bold text-blue-800 uppercase">{certificate.courseTitle}</h3>
-          </div>
-
-          <div className="flex justify-between items-end mt-20 px-12">
-            <div className="text-center w-48">
-              <div className="border-b-2 border-gray-800 mb-2 pb-2">
-                <span className="text-lg font-bold text-gray-800">{date}</span>
-              </div>
-              <p className="text-sm font-bold text-gray-600 uppercase tracking-wider">Issue Date</p>
-            </div>
+          <div className="relative z-20 h-full flex flex-col justify-between py-8">
             
-            <div className="w-32 h-32 bg-blue-50 rounded-full border-4 border-blue-200 flex items-center justify-center shadow-inner">
-              <div className="text-center">
-                <span className="block text-3xl mb-1">🎓</span>
-                <span className="text-sm font-bold text-blue-800 uppercase tracking-widest">Egram</span>
+            {/* Top Meta Info */}
+            <div className="flex justify-between items-start px-8">
+              <div className="text-left text-[#D4AF37]">
+                <Award size={48} className="mb-2" />
+                <div className="font-bold tracking-widest uppercase text-sm">Egram Learning</div>
+              </div>
+              <div className="text-right font-mono text-xs text-slate-500">
+                <div>Certificate No. <span className="font-bold text-slate-800">{certificate.certificateNumber}</span></div>
+                <div>Verification Code: <span className="font-bold text-slate-800">{certificate.verificationCode}</span></div>
               </div>
             </div>
 
-            <div className="text-center w-48">
-              <div className="border-b-2 border-gray-800 mb-2 pb-2">
-                <span className="text-lg font-bold text-gray-800 font-cursive text-2xl">Egram Team</span>
+            {/* Title */}
+            <div>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif text-slate-900 font-bold uppercase tracking-widest mb-6">
+                Certificate
+              </h1>
+              <h2 className="text-xl sm:text-2xl text-[#D4AF37] font-serif italic tracking-widest uppercase mb-12">
+                of Completion
+              </h2>
+              
+              <p className="text-slate-500 uppercase tracking-widest text-sm font-medium mb-6">
+                This is to certify that
+              </p>
+              
+              <div className="inline-block border-b border-slate-300 px-12 pb-2 mb-8">
+                <h3 className="text-4xl sm:text-5xl font-serif text-slate-900 font-bold italic">
+                  {certificate.studentName}
+                </h3>
               </div>
-              <p className="text-sm font-bold text-gray-600 uppercase tracking-wider">Authorized Signature</p>
+
+              <p className="text-slate-500 uppercase tracking-widest text-sm font-medium mb-6">
+                has successfully completed the program
+              </p>
+              
+              <h4 className="text-2xl sm:text-3xl font-bold text-slate-900 px-8 max-w-3xl mx-auto leading-tight">
+                {certificate.courseTitle}
+              </h4>
             </div>
-          </div>
-          
-          <div className="mt-16 text-xs text-gray-400">
-            Verify this certificate at egram.com/verify using code {certificate.verificationCode}
+
+            {/* Bottom Signatures */}
+            <div className="flex justify-between items-end px-12 mt-12">
+              <div className="text-center w-48">
+                <div className="border-b border-slate-400 mb-2 pb-2">
+                  <span className="text-lg font-bold text-slate-800">{date}</span>
+                </div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Issue Date</p>
+              </div>
+              
+              <div className="flex flex-col items-center">
+                 <div className="w-24 h-24 border-2 border-[#D4AF37] rounded flex items-center justify-center bg-white mb-2 p-1">
+                   <QrCode className="w-full h-full text-slate-800" />
+                 </div>
+                 <p className="text-[10px] text-slate-400 uppercase font-mono text-center max-w-[120px]">Scan to verify authenticity</p>
+              </div>
+
+              <div className="text-center w-48">
+                <div className="border-b border-slate-400 mb-2 pb-2 h-10 flex items-end justify-center relative">
+                  {/* Mock Signature graphic */}
+                  <span className="font-serif text-3xl text-slate-800 italic absolute -bottom-1 rotate-[-5deg]">Dr. E. Gram</span>
+                </div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Lead Instructor</p>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
