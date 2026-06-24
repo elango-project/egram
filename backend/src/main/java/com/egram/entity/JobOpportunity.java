@@ -34,14 +34,27 @@ public class JobOpportunity {
     @Column(name = "location")
     private String location;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
-    private String type; // JOB or INTERNSHIP
+    private OpportunityType type; // JOB or INTERNSHIP
 
-    @Column(name = "compensation")
-    private String compensation;
+    @Column(name = "employment_type")
+    private String employmentType; // e.g., FULL_TIME, PART_TIME
+
+    @Column(name = "duration")
+    private String duration; // e.g., 6 months
+
+    @Column(name = "stipend")
+    private String stipend;
+
+    @Column(name = "salary_package")
+    private String salaryPackage;
 
     @Column(name = "skills_required")
     private String skillsRequired;
+
+    @Column(name = "experience_required")
+    private String experienceRequired;
 
     @Column(name = "company_logo_url")
     private String companyLogoUrl;
@@ -49,8 +62,8 @@ public class JobOpportunity {
     @Column(name = "remote_type")
     private String remoteType; // REMOTE, HYBRID, ONSITE
 
-    @Column(name = "expiry_date")
-    private java.time.LocalDate expiryDate;
+    @Column(name = "deadline")
+    private java.time.LocalDate deadline;
 
     @Column(name = "apply_url")
     private String applyUrl;

@@ -44,12 +44,16 @@ public class JobService {
                 .companyName(request.getCompanyName())
                 .description(request.getDescription())
                 .location(request.getLocation())
-                .type(request.getType())
-                .compensation(request.getCompensation())
+                .type(OpportunityType.valueOf(request.getType().toUpperCase()))
+                .employmentType(request.getEmploymentType())
+                .duration(request.getDuration())
+                .stipend(request.getStipend())
+                .salaryPackage(request.getSalaryPackage())
                 .skillsRequired(request.getSkillsRequired())
+                .experienceRequired(request.getExperienceRequired())
                 .companyLogoUrl(request.getCompanyLogoUrl())
                 .remoteType(request.getRemoteType())
-                .expiryDate(request.getExpiryDate())
+                .deadline(request.getDeadline())
                 .applyUrl(request.getApplyUrl())
                 .active(request.getActive() != null ? request.getActive() : true)
                 .createdBy(admin)
@@ -67,12 +71,16 @@ public class JobService {
         job.setCompanyName(request.getCompanyName());
         job.setDescription(request.getDescription());
         job.setLocation(request.getLocation());
-        job.setType(request.getType());
-        job.setCompensation(request.getCompensation());
+        job.setType(OpportunityType.valueOf(request.getType().toUpperCase()));
+        job.setEmploymentType(request.getEmploymentType());
+        job.setDuration(request.getDuration());
+        job.setStipend(request.getStipend());
+        job.setSalaryPackage(request.getSalaryPackage());
         job.setSkillsRequired(request.getSkillsRequired());
+        job.setExperienceRequired(request.getExperienceRequired());
         job.setCompanyLogoUrl(request.getCompanyLogoUrl());
         job.setRemoteType(request.getRemoteType());
-        job.setExpiryDate(request.getExpiryDate());
+        job.setDeadline(request.getDeadline());
         job.setApplyUrl(request.getApplyUrl());
         if (request.getActive() != null) {
             job.setActive(request.getActive());
@@ -139,12 +147,12 @@ public class JobService {
             // Filter out expired jobs automatically
             LocalDate today = LocalDate.now();
             jobs = jobs.stream()
-                .filter(job -> job.getExpiryDate() == null || !job.getExpiryDate().isBefore(today))
+                .filter(job -> job.getDeadline() == null || !job.getDeadline().isBefore(today))
                 .collect(Collectors.toList());
         }
 
         if (type != null && !type.isBlank()) {
-            jobs = jobs.stream().filter(j -> j.getType().equalsIgnoreCase(type)).collect(Collectors.toList());
+            jobs = jobs.stream().filter(j -> j.getType().name().equalsIgnoreCase(type)).collect(Collectors.toList());
         }
         if (location != null && !location.isBlank()) {
             jobs = jobs.stream().filter(j -> j.getLocation() != null && j.getLocation().toLowerCase().contains(location.toLowerCase())).collect(Collectors.toList());
@@ -196,7 +204,7 @@ public class JobService {
         User student = getCurrentUser();
         JobOpportunity job = getJobOrThrow(jobId);
 
-        if (!job.getActive() || (job.getExpiryDate() != null && job.getExpiryDate().isBefore(LocalDate.now()))) {
+        if (!job.getActive() || (job.getDeadline() != null && job.getDeadline().isBefore(LocalDate.now()))) {
             throw new EgramException("Job is no longer active", HttpStatus.BAD_REQUEST);
         }
 
@@ -269,12 +277,16 @@ public class JobService {
                 .companyName(job.getCompanyName())
                 .description(job.getDescription())
                 .location(job.getLocation())
-                .type(job.getType())
-                .compensation(job.getCompensation())
+                .type(job.getType().name())
+                .employmentType(job.getEmploymentType())
+                .duration(job.getDuration())
+                .stipend(job.getStipend())
+                .salaryPackage(job.getSalaryPackage())
                 .skillsRequired(job.getSkillsRequired())
+                .experienceRequired(job.getExperienceRequired())
                 .companyLogoUrl(job.getCompanyLogoUrl())
                 .remoteType(job.getRemoteType())
-                .expiryDate(job.getExpiryDate())
+                .deadline(job.getDeadline())
                 .applyUrl(job.getApplyUrl())
                 .active(job.getActive())
                 .createdAt(job.getCreatedAt())

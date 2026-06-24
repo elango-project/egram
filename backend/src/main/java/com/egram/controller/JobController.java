@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/jobs")
+@RequestMapping("/opportunities")
 @RequiredArgsConstructor
 public class JobController {
 

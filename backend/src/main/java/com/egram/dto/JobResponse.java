@@ -25,11 +25,15 @@ public class JobResponse {
     private LocalDateTime createdAt;
     
     // Phase 11E fields
-    private String compensation;
+    private String employmentType;
+    private String duration;
+    private String stipend;
+    private String salaryPackage;
     private String skillsRequired;
+    private String experienceRequired;
     private String companyLogoUrl;
     private String remoteType;
-    private java.time.LocalDate expiryDate;
+    private java.time.LocalDate deadline;
     private Integer applicationCount;
     
     // For students
