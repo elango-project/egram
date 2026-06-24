@@ -16,8 +16,9 @@ const statCards = (stats) => [
 
 const quickLinks = [
   { to: '/dashboard/courses', icon: BookOpen, label: 'Browse Courses', desc: 'Continue your learning journey', color: '#7c3aed' },
+  { to: '/dashboard/reals', icon: Play, label: 'Watch Reels', desc: 'Micro-learning in 60 seconds', color: '#06b6d4' },
   { to: '/dashboard/jobs', icon: Briefcase, label: 'Explore Jobs', desc: 'Find your dream job', color: '#3b82f6' },
-  { to: '/dashboard/internships', icon: Briefcase, label: 'Find Internships', desc: 'Start your career', color: '#06b6d4' },
+  { to: '/dashboard/internships', icon: Briefcase, label: 'Find Internships', desc: 'Start your career', color: '#10b981' },
   { to: '/dashboard/placement', icon: Award, label: 'Placement Hub', desc: 'Track your career progress', color: '#ec4899' },
 ]
 
@@ -66,7 +67,7 @@ export default function Dashboard() {
       {/* Quick actions */}
       <div className="mb-6">
         <h2 className="text-lg font-bold mb-3">Quick Access</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {quickLinks.map(({ to, icon: Icon, label, desc, color }) => (
             <Link key={to} to={to} className="card hover:no-underline group" style={{ padding: '1.25rem' }}>
               <div className="w-10 h-10 rounded-xl flex-center mb-3"

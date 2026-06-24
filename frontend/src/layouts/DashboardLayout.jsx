@@ -20,11 +20,13 @@ const DashboardLayout = () => {
   const navItems = isAdmin ? [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Courses', path: '/dashboard/courses', icon: BookOpen },
+    { name: 'Reels', path: '/dashboard/reals', icon: Film },
     { name: 'Jobs', path: '/dashboard/jobs', icon: Briefcase },
     { name: 'Internships', path: '/dashboard/internships', icon: UserPlus }
   ] : [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Courses', path: '/dashboard/courses', icon: BookOpen },
+    { name: 'Reels', path: '/dashboard/reals', icon: Film },
     { name: 'Jobs', path: '/dashboard/jobs', icon: Briefcase },
     { name: 'Internships', path: '/dashboard/internships', icon: UserPlus },
     { name: 'Placement Hub', path: '/dashboard/placement', icon: Target }
