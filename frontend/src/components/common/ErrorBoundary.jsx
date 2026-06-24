@@ -38,9 +38,10 @@ class ErrorBoundary extends React.Component {
                 <Home size={18} className="mr-2" /> Go Home
               </Button>
             </div>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {this.state.error && (
               <div className="mt-8 text-left bg-slate-100 p-4 rounded-xl overflow-auto text-xs text-slate-700 max-h-48 border border-slate-200">
                 <p className="font-bold mb-2 text-rose-600">{this.state.error.toString()}</p>
+                <pre>{this.state.error?.stack}</pre>
                 <pre>{this.state.errorInfo?.componentStack}</pre>
               </div>
             )}
