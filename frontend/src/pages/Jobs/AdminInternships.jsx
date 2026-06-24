@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import jobService from '../../services/jobService';
 
-const AdminJobs = () => {
-  const [jobs, setJobs] = useState([]);
+const AdminInternships = () => {
+  const [internships, setInternships] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [editingJob, setEditingJob] = useState(null);
+  const [editingInternship, setEditingInternship] = useState(null);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -13,10 +13,9 @@ const AdminJobs = () => {
   const [companyLogoUrl, setCompanyLogoUrl] = useState('');
   const [location, setLocation] = useState('');
   const [remoteType, setRemoteType] = useState('ONSITE');
-  const [employmentType, setEmploymentType] = useState('FULL_TIME');
-  const [salaryPackage, setSalaryPackage] = useState('');
+  const [duration, setDuration] = useState('');
+  const [stipend, setStipend] = useState('');
   const [skillsRequired, setSkillsRequired] = useState('');
-  const [experienceRequired, setExperienceRequired] = useState('');
   const [deadline, setDeadline] = useState('');
   const [description, setDescription] = useState('');
   const [applyUrl, setApplyUrl] = useState('');
@@ -27,50 +26,48 @@ const AdminJobs = () => {
   const [applicants, setApplicants] = useState([]);
 
   useEffect(() => {
-    fetchJobs();
+    fetchInternships();
   }, []);
 
-  const fetchJobs = async () => {
+  const fetchInternships = async () => {
     try {
-      const data = await jobService.getJobs({ type: 'JOB', activeOnly: false });
-      setJobs(data);
+      const data = await jobService.getJobs({ type: 'INTERNSHIP', activeOnly: false });
+      setInternships(data);
     } catch (error) {
-      console.error('Failed to fetch jobs', error);
+      console.error('Failed to fetch internships', error);
     }
   };
 
   const resetForm = () => {
-    setEditingJob(null);
+    setEditingInternship(null);
     setTitle('');
     setCompanyName('');
     setCompanyLogoUrl('');
     setLocation('');
     setRemoteType('ONSITE');
-    setEmploymentType('FULL_TIME');
-    setSalaryPackage('');
+    setDuration('');
+    setStipend('');
     setSkillsRequired('');
-    setExperienceRequired('');
     setDeadline('');
     setDescription('');
     setApplyUrl('');
     setActive(true);
   };
 
-  const handleEditClick = (job) => {
-    setEditingJob(job);
-    setTitle(job.title);
-    setCompanyName(job.companyName);
-    setCompanyLogoUrl(job.companyLogoUrl || '');
-    setLocation(job.location || '');
-    setRemoteType(job.remoteType || 'ONSITE');
-    setEmploymentType(job.employmentType || 'FULL_TIME');
-    setSalaryPackage(job.salaryPackage || '');
-    setSkillsRequired(job.skillsRequired || '');
-    setExperienceRequired(job.experienceRequired || '');
-    setDeadline(job.deadline || '');
-    setDescription(job.description || '');
-    setApplyUrl(job.applyUrl || '');
-    setActive(job.active !== false);
+  const handleEditClick = (internship) => {
+    setEditingInternship(internship);
+    setTitle(internship.title);
+    setCompanyName(internship.companyName);
+    setCompanyLogoUrl(internship.companyLogoUrl || '');
+    setLocation(internship.location || '');
+    setRemoteType(internship.remoteType || 'ONSITE');
+    setDuration(internship.duration || '');
+    setStipend(internship.stipend || '');
+    setSkillsRequired(internship.skillsRequired || '');
+    setDeadline(internship.deadline || '');
+    setDescription(internship.description || '');
+    setApplyUrl(internship.applyUrl || '');
+    setActive(internship.active !== false);
   };
 
   const handleSubmit = async (e) => {
@@ -78,44 +75,44 @@ const AdminJobs = () => {
     setLoading(true);
     try {
       const payload = {
-        title, companyName, companyLogoUrl, location, type: 'JOB', remoteType, 
-        employmentType, salaryPackage, skillsRequired, experienceRequired, deadline: deadline || null, 
+        title, companyName, companyLogoUrl, location, type: 'INTERNSHIP', remoteType, 
+        duration, stipend, skillsRequired, deadline: deadline || null, 
         description, applyUrl, active
       };
-      if (editingJob) {
-        await jobService.updateJob(editingJob.id, payload);
-        toast.success('Job updated successfully');
+      if (editingInternship) {
+        await jobService.updateJob(editingInternship.id, payload);
+        toast.success('Internship updated successfully');
       } else {
         await jobService.createJob(payload);
-        toast.success('Job created successfully');
+        toast.success('Internship created successfully');
       }
       resetForm();
-      fetchJobs();
+      fetchInternships();
     } catch (error) {
-      console.error('Failed to save job', error);
-      toast.error('Failed to save job');
+      console.error('Failed to save internship', error);
+      toast.error('Failed to save internship');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Delete this Job? This will delete all applications too.')) {
+    if (window.confirm('Delete this Internship? This will delete all applications too.')) {
       try {
         await jobService.deleteJob(id);
-        fetchJobs();
+        fetchInternships();
         toast.success('Deleted');
       } catch (error) {
-        console.error('Failed to delete job', error);
-        toast.error('Failed to delete job');
+        console.error('Failed to delete internship', error);
+        toast.error('Failed to delete internship');
       }
     }
   };
 
-  const handleViewApplicants = async (job) => {
-    setViewingApplicantsFor(job);
+  const handleViewApplicants = async (internship) => {
+    setViewingApplicantsFor(internship);
     try {
-      const data = await jobService.getJobApplications(job.id);
+      const data = await jobService.getJobApplications(internship.id);
       setApplicants(data);
     } catch (error) {
       console.error('Failed to fetch applicants', error);
@@ -137,54 +134,49 @@ const AdminJobs = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Manage Jobs</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Manage Internships</h2>
       </div>
 
       {/* Form */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
-        <h3 className="text-lg font-semibold mb-4 text-indigo-900 border-b pb-2">
-          {editingJob ? 'Edit Job Posting' : 'Post New Job'}
+        <h3 className="text-lg font-semibold mb-4 text-emerald-900 border-b pb-2">
+          {editingInternship ? 'Edit Internship Posting' : 'Post New Internship'}
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input type="text" placeholder="Job Title" required value={title} onChange={e => setTitle(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-            <input type="text" placeholder="Company Name" required value={companyName} onChange={e => setCompanyName(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-            <input type="url" placeholder="Company Logo URL" value={companyLogoUrl} onChange={e => setCompanyLogoUrl(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <input type="text" placeholder="Internship Title" required value={title} onChange={e => setTitle(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <input type="text" placeholder="Company Name" required value={companyName} onChange={e => setCompanyName(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <input type="url" placeholder="Company Logo URL" value={companyLogoUrl} onChange={e => setCompanyLogoUrl(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
             
-            <input type="text" placeholder="Location (e.g. Bangalore)" value={location} onChange={e => setLocation(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-            <select value={remoteType} onChange={e => setRemoteType(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <input type="text" placeholder="Location (e.g. Pune)" value={location} onChange={e => setLocation(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <select value={remoteType} onChange={e => setRemoteType(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
               <option value="ONSITE">Onsite</option>
               <option value="HYBRID">Hybrid</option>
               <option value="REMOTE">Remote</option>
             </select>
-            <select value={employmentType} onChange={e => setEmploymentType(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-              <option value="FULL_TIME">Full Time</option>
-              <option value="PART_TIME">Part Time</option>
-              <option value="CONTRACT">Contract</option>
-            </select>
+            <input type="text" placeholder="Duration (e.g. 6 Months)" value={duration} onChange={e => setDuration(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
 
-            <input type="text" placeholder="Salary Package (e.g. 12 LPA)" value={salaryPackage} onChange={e => setSalaryPackage(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-            <input type="text" placeholder="Experience (e.g. 2-4 years)" value={experienceRequired} onChange={e => setExperienceRequired(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-            <input type="text" placeholder="Skills (e.g. Java, React)" value={skillsRequired} onChange={e => setSkillsRequired(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <input type="text" placeholder="Stipend (e.g. 20K/month)" value={stipend} onChange={e => setStipend(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <input type="text" placeholder="Skills (e.g. HTML, CSS)" value={skillsRequired} onChange={e => setSkillsRequired(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
             
             <div className="flex flex-col">
               <label className="text-xs text-gray-500 mb-1">Deadline Date</label>
-              <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+              <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
             </div>
             
-            <input type="url" placeholder="Apply URL (Optional External Link)" value={applyUrl} onChange={e => setApplyUrl(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <input type="url" placeholder="Apply URL (Optional External Link)" value={applyUrl} onChange={e => setApplyUrl(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
             <div className="flex items-center gap-2 px-2">
-              <input type="checkbox" id="active" checked={active} onChange={e => setActive(e.target.checked)} className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" />
+              <input type="checkbox" id="active" checked={active} onChange={e => setActive(e.target.checked)} className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500" />
               <label htmlFor="active" className="text-gray-700 font-medium">Is Active?</label>
             </div>
           </div>
-          <textarea placeholder="Job Description (Required)" required value={description} onChange={e => setDescription(e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none" rows="4" />
+          <textarea placeholder="Internship Description (Required)" required value={description} onChange={e => setDescription(e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" rows="4" />
           
           <div className="flex gap-4 pt-2">
-            <button type="submit" disabled={loading} className="bg-indigo-600 text-white px-8 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50">
-              {loading ? 'Saving...' : editingJob ? 'Update Job' : 'Publish Job'}
+            <button type="submit" disabled={loading} className="bg-emerald-600 text-white px-8 py-2.5 rounded-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50">
+              {loading ? 'Saving...' : editingInternship ? 'Update Internship' : 'Publish Internship'}
             </button>
-            {editingJob && (
+            {editingInternship && (
               <button type="button" onClick={resetForm} className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg font-medium hover:bg-gray-200 transition-colors">
                 Cancel
               </button>
@@ -205,34 +197,34 @@ const AdminJobs = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {jobs.map(job => (
-              <tr key={job.id} className="hover:bg-gray-50 transition-colors">
+            {internships.map(intern => (
+              <tr key={intern.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
-                  <div className="text-sm font-bold text-gray-900">{job.title}</div>
-                  <div className="text-sm text-gray-500">{job.companyName}</div>
+                  <div className="text-sm font-bold text-gray-900">{intern.title}</div>
+                  <div className="text-sm text-gray-500">{intern.companyName}</div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm text-gray-800">{job.employmentType?.replace('_',' ')} • {job.remoteType}</div>
-                  <div className="text-sm text-gray-500">{job.location || 'Remote'} • {job.salaryPackage || 'Not specified'}</div>
+                  <div className="text-sm text-gray-800">{intern.duration || 'Flexible'} • {intern.remoteType}</div>
+                  <div className="text-sm text-gray-500">{intern.location || 'Remote'} • {intern.stipend || 'Unpaid'}</div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className={`text-xs font-bold px-2 py-1 inline-block rounded-full mb-1 ${job.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {job.active ? 'Active' : 'Inactive'}
+                  <div className={`text-xs font-bold px-2 py-1 inline-block rounded-full mb-1 ${intern.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {intern.active ? 'Active' : 'Inactive'}
                   </div>
-                  <div className="text-sm text-gray-500">Apps: <span className="font-bold text-indigo-600">{job.applicationCount || 0}</span></div>
+                  <div className="text-sm text-gray-500">Apps: <span className="font-bold text-emerald-600">{intern.applicationCount || 0}</span></div>
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-medium space-y-2 flex flex-col items-end">
-                  <button onClick={() => handleViewApplicants(job)} className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded transition-colors w-24 text-center">View Apps</button>
+                  <button onClick={() => handleViewApplicants(intern)} className="text-emerald-600 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-3 py-1 rounded transition-colors w-24 text-center">View Apps</button>
                   <div className="flex gap-3 mt-1">
-                    <button onClick={() => handleEditClick(job)} className="text-blue-600 hover:text-blue-800">Edit</button>
-                    <button onClick={() => handleDelete(job.id)} className="text-red-600 hover:text-red-800">Delete</button>
+                    <button onClick={() => handleEditClick(intern)} className="text-blue-600 hover:text-blue-800">Edit</button>
+                    <button onClick={() => handleDelete(intern.id)} className="text-red-600 hover:text-red-800">Delete</button>
                   </div>
                 </td>
               </tr>
             ))}
-            {jobs.length === 0 && (
+            {internships.length === 0 && (
               <tr>
-                <td colSpan="4" className="px-6 py-8 text-center text-gray-500">No Jobs posted yet.</td>
+                <td colSpan="4" className="px-6 py-8 text-center text-gray-500">No Internships posted yet.</td>
               </tr>
             )}
           </tbody>
@@ -268,7 +260,7 @@ const AdminJobs = () => {
 
                       <div className="flex flex-col gap-3 min-w-[160px] justify-center">
                         {app.resumeUrl ? (
-                          <a href={app.resumeUrl} target="_blank" rel="noreferrer" className="text-center bg-indigo-50 text-indigo-700 font-semibold px-4 py-2 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100">
+                          <a href={app.resumeUrl} target="_blank" rel="noreferrer" className="text-center bg-emerald-50 text-emerald-700 font-semibold px-4 py-2 rounded-lg hover:bg-emerald-100 transition-colors border border-emerald-100">
                             View Resume
                           </a>
                         ) : (
@@ -305,4 +297,4 @@ const AdminJobs = () => {
   );
 };
 
-export default AdminJobs;
+export default AdminInternships;

@@ -21,6 +21,7 @@ const DashboardLayout = () => {
     { name: 'Courses', path: '/dashboard/courses' },
     { name: 'Assessments', path: '/dashboard/assessments' },
     { name: 'Jobs', path: '/dashboard/jobs' },
+    { name: 'Internships', path: '/dashboard/internships' }
   ] : [
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Reals', path: '/dashboard/reals' },
@@ -28,6 +29,8 @@ const DashboardLayout = () => {
     { name: 'Courses', path: '/dashboard/courses' },
     { name: 'Assessments', path: '/dashboard/assessments' },
     { name: 'Jobs', path: '/dashboard/jobs' },
+    { name: 'Internships', path: '/dashboard/internships' },
+    { name: 'Placement', path: '/dashboard/placement' }
   ];
 
   return (

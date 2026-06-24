@@ -1,0 +1,9 @@
+@echo off
+set DB_URL=jdbc:h2:mem:egram_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+set DB_USERNAME=sa
+set DB_PASSWORD=
+set JWT_SECRET=mysecretkeywhichisverylongandsecure32chars
+set SEED_ADMIN=true
+set LOG_LEVEL=INFO
+set DDL_AUTO=update
+mvn spring-boot:run

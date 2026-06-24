@@ -22,6 +22,8 @@ import AssessmentPage from '../pages/Courses/AssessmentPage';
 import CertificatePage from '../pages/Courses/CertificatePage';
 import AssessmentsPage from '../pages/Assessments/AssessmentsPage';
 import JobsPage from '../pages/Jobs/JobsPage';
+import InternshipsPage from '../pages/Jobs/InternshipsPage';
+import PlacementDashboard from '../pages/PlacementDashboard';
 
 const AppRouter = () => {
   return (
@@ -49,6 +51,8 @@ const AppRouter = () => {
             <Route path="/courses/:courseId/certificate" element={<CertificatePage />} />
             <Route path="/dashboard/assessments" element={<AssessmentsPage />} />
             <Route path="/dashboard/jobs" element={<JobsPage />} />
+            <Route path="/dashboard/internships" element={<InternshipsPage />} />
+            <Route path="/dashboard/placement" element={<PlacementDashboard />} />
           </Route>
         </Route>
       </Routes>
