@@ -20,7 +20,4 @@ public class CourseModuleRequest {
 
     @NotNull(message = "Module order is required")
     private Integer moduleOrder;
-
-    private UUID realId;
-    private UUID longFormVideoId;
 }

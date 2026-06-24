@@ -91,20 +91,10 @@ public class CourseService {
     public CourseModuleResponse addModule(UUID courseId, CourseModuleRequest request) {
         Course course = getCourseOrThrow(courseId);
 
-        // Validation rule: Exactly one of realId or longFormVideoId must be present
-        boolean hasReal = request.getRealId() != null;
-        boolean hasVideo = request.getLongFormVideoId() != null;
-
-        if ((hasReal && hasVideo) || (!hasReal && !hasVideo)) {
-            throw new EgramException("Exactly one of realId or longFormVideoId must be provided", HttpStatus.BAD_REQUEST);
-        }
-
         CourseModule module = CourseModule.builder()
                 .course(course)
                 .title(request.getTitle())
                 .moduleOrder(request.getModuleOrder())
-                .realId(request.getRealId())
-                .longFormVideoId(request.getLongFormVideoId())
                 .build();
 
         module = courseModuleRepository.save(module);
@@ -113,8 +103,6 @@ public class CourseService {
                 .id(module.getId())
                 .title(module.getTitle())
                 .moduleOrder(module.getModuleOrder())
-                .realId(module.getRealId())
-                .longFormVideoId(module.getLongFormVideoId())
                 .build();
     }
 
@@ -195,10 +183,27 @@ public class CourseService {
     }
 
     @Transactional
-    public void reorderTopicReels(UUID topicId, List<UUID> reelIds) {
+    public void reorderTopicReels(UUID topicId, ReorderRequest request) {
         List<TopicReel> existingReels = topicReelRepository.findByTopicIdOrderByReelOrder(topicId);
+        List<UUID> requestedIds = request.getOrderedIds();
+        
+        if (requestedIds.size() != existingReels.size()) {
+            throw new EgramException("Count mismatch: provided " + requestedIds.size() + " IDs, but topic has " + existingReels.size() + " reels.", HttpStatus.BAD_REQUEST);
+        }
+        
+        if (new java.util.HashSet<>(requestedIds).size() != requestedIds.size()) {
+            throw new EgramException("Duplicate IDs in reorder request.", HttpStatus.BAD_REQUEST);
+        }
+        
+        List<UUID> existingIds = existingReels.stream().map(tr -> tr.getReel().getId()).toList();
+        for (UUID id : requestedIds) {
+            if (!existingIds.contains(id)) {
+                throw new EgramException("ID " + id + " does not belong to this topic.", HttpStatus.BAD_REQUEST);
+            }
+        }
+
         for (TopicReel tr : existingReels) {
-            int newOrder = reelIds.indexOf(tr.getReel().getId());
+            int newOrder = requestedIds.indexOf(tr.getReel().getId());
             if (newOrder != -1) {
                 tr.setReelOrder(newOrder);
                 topicReelRepository.save(tr);
@@ -381,7 +386,7 @@ public class CourseService {
     public TopicProgressResponse getTopicProgress(UUID topicId) {
         User student = getCurrentUser();
         TopicProgress tp = topicProgressRepository.findByTopicIdAndStudentId(topicId, student.getId())
-                .orElse(createInitialTopicProgress(topicId, student));
+                .orElseGet(() -> createInitialTopicProgress(topicId, student));
         return mapTopicProgressToResponse(tp);
     }
 
@@ -432,7 +437,7 @@ public class CourseService {
         topicReelProgressRepository.save(trp);
 
         TopicProgress tp = topicProgressRepository.findByTopicIdAndStudentId(topicId, student.getId())
-                .orElse(createInitialTopicProgress(topicId, student));
+                .orElseGet(() -> createInitialTopicProgress(topicId, student));
 
         // Check if all reels are completed
         List<TopicReel> allReels = topicReelRepository.findByTopicIdOrderByReelOrder(topicId);
@@ -497,10 +502,27 @@ public class CourseService {
     }
 
     @Transactional
-    public void reorderTopicVideos(UUID topicId, List<UUID> videoIds) {
+    public void reorderTopicVideos(UUID topicId, ReorderRequest request) {
         List<TopicVideo> existingVideos = topicVideoRepository.findByTopicIdOrderByVideoOrder(topicId);
+        List<UUID> requestedIds = request.getOrderedIds();
+        
+        if (requestedIds.size() != existingVideos.size()) {
+            throw new EgramException("Count mismatch: provided " + requestedIds.size() + " IDs, but topic has " + existingVideos.size() + " videos.", HttpStatus.BAD_REQUEST);
+        }
+        
+        if (new java.util.HashSet<>(requestedIds).size() != requestedIds.size()) {
+            throw new EgramException("Duplicate IDs in reorder request.", HttpStatus.BAD_REQUEST);
+        }
+        
+        List<UUID> existingIds = existingVideos.stream().map(tv -> tv.getVideo().getId()).toList();
+        for (UUID id : requestedIds) {
+            if (!existingIds.contains(id)) {
+                throw new EgramException("ID " + id + " does not belong to this topic.", HttpStatus.BAD_REQUEST);
+            }
+        }
+
         for (TopicVideo tv : existingVideos) {
-            int newOrder = videoIds.indexOf(tv.getVideo().getId());
+            int newOrder = requestedIds.indexOf(tv.getVideo().getId());
             if (newOrder != -1) {
                 tv.setVideoOrder(newOrder);
                 topicVideoRepository.save(tv);
@@ -532,7 +554,7 @@ public class CourseService {
         topicVideoProgressRepository.save(tvp);
 
         TopicProgress tp = topicProgressRepository.findByTopicIdAndStudentId(topicId, student.getId())
-                .orElse(createInitialTopicProgress(topicId, student));
+                .orElseGet(() -> createInitialTopicProgress(topicId, student));
 
         // Check if all videos are completed
         List<TopicVideo> allVideos = topicVideoRepository.findByTopicIdOrderByVideoOrder(topicId);
@@ -675,8 +697,13 @@ public class CourseService {
             if (enrollment.isPresent()) {
                 isEnrolled = true;
                 completedModules = enrollment.get().getCompletedModules();
-                if (totalModules > 0) {
-                    progressPercentage = (int) (((double) completedModules / totalModules) * 100);
+                
+                List<TopicProgress> topicProgressList = topicProgressRepository.findByTopicModuleCourseIdAndStudentId(course.getId(), currentUser.getId());
+                long completedTopicsCount = topicProgressList.stream().filter(TopicProgress::getTopicCompleted).count();
+                long totalTopicsCount = course.getModules().stream().flatMap(m -> m.getTopics().stream()).count();
+                
+                if (totalTopicsCount > 0) {
+                    progressPercentage = (int) (((double) completedTopicsCount / totalTopicsCount) * 100);
                 }
             }
         } else if ("ADMIN".equals(currentUser.getRole().name())) {
@@ -737,8 +764,6 @@ public class CourseService {
                         .id(m.getId())
                         .title(m.getTitle())
                         .moduleOrder(m.getModuleOrder())
-                        .realId(m.getRealId())
-                        .longFormVideoId(m.getLongFormVideoId())
                         .topics(topicResponses)
                         .build();
                 })

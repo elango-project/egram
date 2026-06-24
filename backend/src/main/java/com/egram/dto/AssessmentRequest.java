@@ -22,6 +22,9 @@ public class AssessmentRequest {
 
     private String description;
 
+    @NotNull(message = "Duration in minutes is required")
+    private Integer durationMinutes;
+
     @NotNull(message = "Passing percentage is required")
     @Min(value = 0, message = "Passing percentage cannot be less than 0")
     @Max(value = 100, message = "Passing percentage cannot be more than 100")

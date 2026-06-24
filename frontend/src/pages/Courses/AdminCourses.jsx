@@ -21,8 +21,7 @@ const AdminCourses = () => {
   
   // Form state for Module
   const [moduleTitle, setModuleTitle] = useState('');
-  const [moduleType, setModuleType] = useState('REAL'); // REAL or VIDEO
-  const [moduleContentId, setModuleContentId] = useState('');
+  
 
   // Quiz Builder state
   const [activeQuizTopic, setActiveQuizTopic] = useState(null);
@@ -90,6 +89,8 @@ const AdminCourses = () => {
       if (!module) return;
       const topic = module.topics.find(t => t.id === topicId);
       
+      const previousState = structuredClone(selectedCourse);
+      
       if (isReel) {
         const newReels = Array.from(topic.reels || []);
         const [removed] = newReels.splice(source.index, 1);
@@ -103,7 +104,7 @@ const AdminCourses = () => {
         try {
           await courseService.reorderTopicReels(topicId, reelIds);
           handleSelectCourse(selectedCourse);
-        } catch(e) { toast.error('Failed to reorder reels'); }
+        } catch(e) { toast.error('Failed to reorder reels'); setSelectedCourse(previousState); }
       } else {
         const newVideos = Array.from(topic.videos || []);
         const [removed] = newVideos.splice(source.index, 1);
@@ -117,7 +118,7 @@ const AdminCourses = () => {
         try {
           await courseService.reorderTopicVideos(topicId, videoIds);
           handleSelectCourse(selectedCourse);
-        } catch(e) { toast.error('Failed to reorder videos'); }
+        } catch(e) { toast.error('Failed to reorder videos'); setSelectedCourse(previousState); }
       }
     }
   };
@@ -162,12 +163,9 @@ const AdminCourses = () => {
     setLoading(true);
     try {
       await courseService.addModule(selectedCourse.id, {
-        title: moduleTitle,
-        type: moduleType,
-        contentId: moduleContentId
+        title: moduleTitle
       });
       setModuleTitle('');
-      setModuleContentId('');
       // Refresh course details
       handleSelectCourse(selectedCourse);
       fetchCourses(); // refresh counts
@@ -311,24 +309,7 @@ const AdminCourses = () => {
                     onChange={e => setModuleTitle(e.target.value)}
                     className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
                   />
-                  <div className="flex gap-4">
-                    <select 
-                      value={moduleType} 
-                      onChange={e => setModuleType(e.target.value)}
-                      className="border border-gray-300 rounded px-3 py-2 text-sm bg-white"
-                    >
-                      <option value="REAL">Real</option>
-                      <option value="VIDEO">Video</option>
-                    </select>
-                    <input 
-                      type="text" 
-                      placeholder="Content ID (UUID of Real/Video)" 
-                      required
-                      value={moduleContentId} 
-                      onChange={e => setModuleContentId(e.target.value)}
-                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                    />
-                  </div>
+                  
                   <button 
                     type="submit" 
                     disabled={loading}
@@ -341,6 +322,7 @@ const AdminCourses = () => {
 
               {/* List Modules */}
               <h4 className="font-semibold mb-3 mt-8 border-t pt-4">Existing Modules & Topics</h4>
+              <DragDropContext onDragEnd={handleDragEnd}>
               <ul className="space-y-4">
                 {selectedCourse.modules?.map((mod, index) => (
                   <li key={mod.id} className="p-4 bg-gray-50 border rounded-md shadow-sm">
@@ -393,102 +375,129 @@ const AdminCourses = () => {
                               
                                 {/* Quick Learning Path (Reels) */}
                               <div className="w-full mt-3 bg-gray-50 p-3 rounded border border-gray-200">
-                                <h5 className="text-xs font-bold text-gray-700 mb-2">Quick Learning Path (Reels)</h5>
+                                <div className="flex justify-between items-center mb-2">
+                                  <h5 className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                                    <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">Quick Learning Path</span>
+                                    Reels
+                                  </h5>
+                                  <button 
+                                    onClick={() => { setSelectorType('REEL'); setSelectorTopicId(topic.id); }}
+                                    className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-2 py-1 rounded text-xs font-semibold"
+                                  >
+                                    + Attach Reel
+                                  </button>
+                                </div>
                                 
-                                {topic.reels?.length > 0 ? (
-                                  <ul className="space-y-1 mb-3">
-                                    {topic.reels.map(reel => (
-                                      <li key={reel.id} className="flex justify-between items-center text-xs bg-white p-1 border rounded">
-                                        <span className="truncate flex-1 mr-2">{reel.reelOrder}. {reel.title}</span>
-                                        <button 
-                                          onClick={async () => {
-                                            try {
-                                              await courseService.deleteTopicReel(topic.id, reel.reelId);
-                                              handleSelectCourse(selectedCourse);
-                                            } catch (e) { toast.error('Failed to remove reel'); }
-                                          }}
-                                          className="text-red-400 hover:text-red-600 font-bold px-1"
-                                        >
-                                          x
-                                        </button>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : (
-                                  <p className="text-xs text-gray-500 italic mb-2">No reels attached yet.</p>
-                                )}
+                                <Droppable droppableId={`reels-${topic.id}`}>
+                                  {(provided) => (
+                                    <ul 
+                                      {...provided.droppableProps} 
+                                      ref={provided.innerRef}
+                                      className="space-y-2 mb-3 min-h-[30px]"
+                                    >
+                                      {topic.reels?.length > 0 ? topic.reels.map((reel, index) => (
+                                        <Draggable key={reel.id} draggableId={`reel-${reel.reelId}`} index={index}>
+                                          {(provided) => (
+                                            <li 
+                                              ref={provided.innerRef}
+                                              {...provided.draggableProps}
+                                              className="flex justify-between items-center bg-white p-2 border rounded shadow-sm group"
+                                            >
+                                              <div className="flex items-center gap-3 overflow-hidden">
+                                                <div 
+                                                  {...provided.dragHandleProps} 
+                                                  className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
+                                                >
+                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                                                </div>
+                                                <div className="w-12 h-8 bg-gray-200 rounded overflow-hidden flex-shrink-0 relative">
+                                                  {reel.thumbnailUrl ? <img src={reel.thumbnailUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[8px] text-gray-400">No Img</div>}
+                                                </div>
+                                                <div className="truncate">
+                                                  <div className="text-xs font-bold text-gray-800 truncate">{index + 1}. {reel.title}</div>
+                                                </div>
+                                              </div>
+                                              <button 
+                                                onClick={async () => {
+                                                  try {
+                                                    await courseService.deleteTopicReel(topic.id, reel.reelId);
+                                                    handleSelectCourse(selectedCourse);
+                                                  } catch (e) { toast.error('Failed to remove reel'); }
+                                                }}
+                                                className="text-red-400 hover:text-red-600 font-bold px-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                              >
+                                                ✕
+                                              </button>
+                                            </li>
+                                          )}
+                                        </Draggable>
+                                      )) : <p className="text-xs text-gray-500 italic">No reels attached yet.</p>}
+                                      {provided.placeholder}
+                                    </ul>
+                                  )}
+                                </Droppable>
 
-                                <form onSubmit={async (e) => {
-                                  e.preventDefault();
-                                  const reelId = e.target.reelId.value;
-                                  if (!reelId) return;
-                                  setLoading(true);
-                                  try {
-                                    await courseService.addTopicReel(topic.id, {
-                                      reelId,
-                                      reelOrder: (topic.reels?.length || 0) + 1
-                                    });
-                                    e.target.reset();
-                                    handleSelectCourse(selectedCourse);
-                                  } catch (err) {
-                                    toast.error('Failed to attach reel');
-                                  } finally {
-                                    setLoading(false);
-                                  }
-                                }} className="flex gap-2 mb-4">
-                                  <input type="text" name="reelId" placeholder="Reel UUID" required className="flex-1 border rounded px-2 py-1 text-xs" />
-                                  <button type="submit" disabled={loading} className="bg-purple-600 text-white px-2 py-1 rounded text-xs hover:bg-purple-700 disabled:opacity-50">
-                                    Attach Reel
+                                <div className="flex justify-between items-center mb-2 border-t pt-2">
+                                  <h5 className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                                    <span className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">Deep Learning Path</span>
+                                    Videos
+                                  </h5>
+                                  <button 
+                                    onClick={() => { setSelectorType('VIDEO'); setSelectorTopicId(topic.id); }}
+                                    className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-xs font-semibold"
+                                  >
+                                    + Attach Video
                                   </button>
-                                </form>
+                                </div>
 
-                                <h5 className="text-xs font-bold text-gray-700 mb-2 border-t pt-2">Deep Learning Path (Videos)</h5>
-                                {topic.videos?.length > 0 ? (
-                                  <ul className="space-y-1 mb-3">
-                                    {topic.videos.map(video => (
-                                      <li key={video.id} className="flex justify-between items-center text-xs bg-white p-1 border rounded">
-                                        <span className="truncate flex-1 mr-2">{video.videoOrder}. {video.title}</span>
-                                        <button 
-                                          onClick={async () => {
-                                            try {
-                                              await courseService.deleteTopicVideo(topic.id, video.videoId);
-                                              handleSelectCourse(selectedCourse);
-                                            } catch (e) { toast.error('Failed to remove video'); }
-                                          }}
-                                          className="text-red-400 hover:text-red-600 font-bold px-1"
-                                        >
-                                          x
-                                        </button>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : (
-                                  <p className="text-xs text-gray-500 italic mb-2">No videos attached yet.</p>
-                                )}
-
-                                <form onSubmit={async (e) => {
-                                  e.preventDefault();
-                                  const videoId = e.target.videoId.value;
-                                  if (!videoId) return;
-                                  setLoading(true);
-                                  try {
-                                    await courseService.addTopicVideo(topic.id, {
-                                      videoId,
-                                      videoOrder: (topic.videos?.length || 0) + 1
-                                    });
-                                    e.target.reset();
-                                    handleSelectCourse(selectedCourse);
-                                  } catch (err) {
-                                    toast.error('Failed to attach video');
-                                  } finally {
-                                    setLoading(false);
-                                  }
-                                }} className="flex gap-2">
-                                  <input type="text" name="videoId" placeholder="Video UUID" required className="flex-1 border rounded px-2 py-1 text-xs" />
-                                  <button type="submit" disabled={loading} className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 disabled:opacity-50">
-                                    Attach Video
-                                  </button>
-                                </form>
+                                <Droppable droppableId={`videos-${topic.id}`}>
+                                  {(provided) => (
+                                    <ul 
+                                      {...provided.droppableProps} 
+                                      ref={provided.innerRef}
+                                      className="space-y-2 mb-3 min-h-[30px]"
+                                    >
+                                      {topic.videos?.length > 0 ? topic.videos.map((video, index) => (
+                                        <Draggable key={video.id} draggableId={`video-${video.videoId}`} index={index}>
+                                          {(provided) => (
+                                            <li 
+                                              ref={provided.innerRef}
+                                              {...provided.draggableProps}
+                                              className="flex justify-between items-center bg-white p-2 border rounded shadow-sm group"
+                                            >
+                                              <div className="flex items-center gap-3 overflow-hidden">
+                                                <div 
+                                                  {...provided.dragHandleProps} 
+                                                  className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
+                                                >
+                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                                                </div>
+                                                <div className="w-12 h-8 bg-gray-200 rounded overflow-hidden flex-shrink-0 relative">
+                                                  {video.thumbnailUrl ? <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[8px] text-gray-400">No Img</div>}
+                                                </div>
+                                                <div className="truncate">
+                                                  <div className="text-xs font-bold text-gray-800 truncate">{index + 1}. {video.title}</div>
+                                                </div>
+                                              </div>
+                                              <button 
+                                                onClick={async () => {
+                                                  try {
+                                                    await courseService.deleteTopicVideo(topic.id, video.videoId);
+                                                    handleSelectCourse(selectedCourse);
+                                                  } catch (e) { toast.error('Failed to remove video'); }
+                                                }}
+                                                className="text-red-400 hover:text-red-600 font-bold px-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                              >
+                                                ✕
+                                              </button>
+                                            </li>
+                                          )}
+                                        </Draggable>
+                                      )) : <p className="text-xs text-gray-500 italic">No videos attached yet.</p>}
+                                      {provided.placeholder}
+                                    </ul>
+                                  )}
+                                </Droppable>
                               </div>
                             </li>
                           ))}
@@ -532,6 +541,7 @@ const AdminCourses = () => {
                   <li className="text-gray-500 text-sm italic">No modules added yet.</li>
                 )}
               </ul>
+              </DragDropContext>
 
               {/* Final Assessment Builder Block */}
               <div className="mt-8 border-t border-gray-200 pt-6">

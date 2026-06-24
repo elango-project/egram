@@ -31,12 +31,6 @@ public class CourseModule {
     @Column(name = "module_order", nullable = false)
     private Integer moduleOrder;
 
-    @Column(name = "real_id")
-    private UUID realId;
-
-    @Column(name = "long_form_video_id")
-    private UUID longFormVideoId;
-
     @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private java.util.List<Topic> topics = new java.util.ArrayList<>();

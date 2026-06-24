@@ -109,7 +109,7 @@ const courseService = {
   },
 
   reorderTopicReels: async (topicId, reelIds) => {
-    const response = await axiosInstance.put(`/courses/topics/${topicId}/reels/reorder`, reelIds);
+    const response = await axiosInstance.put(`/courses/topics/${topicId}/reels/reorder`, { orderedIds: reelIds });
     return response.data;
   },
 
@@ -124,7 +124,7 @@ const courseService = {
   },
 
   reorderTopicVideos: async (topicId, videoIds) => {
-    const response = await axiosInstance.put(`/courses/topics/${topicId}/videos/reorder`, videoIds);
+    const response = await axiosInstance.put(`/courses/topics/${topicId}/videos/reorder`, { orderedIds: videoIds });
     return response.data;
   },
 

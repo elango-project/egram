@@ -17,6 +17,7 @@ public class AssessmentResponse {
     private String title;
     private String description;
     private Integer passingPercentage;
+    private Integer durationMinutes;
     private Integer maxAttempts;
     private Boolean active;
     private String courseTitle;

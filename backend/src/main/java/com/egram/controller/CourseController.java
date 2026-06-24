@@ -93,8 +93,8 @@ public class CourseController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> reorderTopicReels(
             @PathVariable UUID topicId,
-            @RequestBody List<UUID> reelIds) {
-        courseService.reorderTopicReels(topicId, reelIds);
+            @Valid @RequestBody ReorderRequest request) {
+        courseService.reorderTopicReels(topicId, request);
         return ResponseEntity.ok().build();
     }
 
@@ -119,8 +119,8 @@ public class CourseController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> reorderTopicVideos(
             @PathVariable UUID topicId,
-            @RequestBody List<UUID> videoIds) {
-        courseService.reorderTopicVideos(topicId, videoIds);
+            @Valid @RequestBody ReorderRequest request) {
+        courseService.reorderTopicVideos(topicId, request);
         return ResponseEntity.ok().build();
     }
 

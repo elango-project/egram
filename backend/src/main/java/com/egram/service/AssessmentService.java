@@ -50,10 +50,12 @@ public class AssessmentService {
         Assessment assessment = Assessment.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
+                .durationMinutes(request.getDurationMinutes())
                 .passingPercentage(request.getPassingPercentage())
                 .maxAttempts(request.getMaxAttempts())
                 .active(request.getActive() != null ? request.getActive() : true)
                 .course(course)
+                .createdBy(getCurrentUser())
                 .build();
         
         assessment = assessmentRepository.save(assessment);
@@ -226,6 +228,7 @@ public class AssessmentService {
                 .id(assessment.getId())
                 .title(assessment.getTitle())
                 .description(assessment.getDescription())
+                .durationMinutes(assessment.getDurationMinutes())
                 .passingPercentage(assessment.getPassingPercentage())
                 .maxAttempts(assessment.getMaxAttempts())
                 .active(assessment.getActive())

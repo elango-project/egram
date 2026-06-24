@@ -15,7 +15,5 @@ public class CourseModuleResponse {
     private UUID id;
     private String title;
     private Integer moduleOrder;
-    private UUID realId;
-    private UUID longFormVideoId;
     private java.util.List<TopicResponse> topics;
 }
