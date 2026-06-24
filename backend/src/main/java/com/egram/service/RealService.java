@@ -110,6 +110,15 @@ public class RealService {
     }
 
     @Transactional(readOnly = true)
+    public List<RealResponse> searchReals(String query) {
+        User currentUser = getCurrentUser();
+        List<Real> reals = realRepository.findByTitleContainingIgnoreCase(query);
+        return reals.stream()
+                .map(real -> mapToRealResponse(real, currentUser))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public RealResponse getRealById(UUID id) {
         Real real = getRealOrThrow(id);
         return mapToRealResponse(real, getCurrentUser());

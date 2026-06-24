@@ -18,5 +18,6 @@ public class AssessmentResultResponse {
     private Integer totalQuestions;
     private Integer percentage;
     private Boolean passed;
+    private String message;
     private LocalDateTime submittedAt;
 }

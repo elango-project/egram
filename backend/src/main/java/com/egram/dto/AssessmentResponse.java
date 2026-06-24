@@ -16,9 +16,11 @@ public class AssessmentResponse {
     private UUID id;
     private String title;
     private String description;
-    private Integer durationMinutes;
     private Integer passingPercentage;
+    private Integer maxAttempts;
+    private Boolean active;
     private String courseTitle;
-    private int totalQuestions;
+    private UUID courseId;
+    private java.util.List<AssessmentQuestionResponse> questions;
     private LocalDateTime createdAt;
 }

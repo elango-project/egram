@@ -30,4 +30,7 @@ public class TopicVideo {
     @JoinColumn(name = "video_id", nullable = false)
     private LongFormVideo video;
 
+    @Column(name = "video_order", nullable = false)
+    private Integer videoOrder;
+
 }

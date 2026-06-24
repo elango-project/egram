@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import ContentSelectorModal from '../../components/Courses/ContentSelectorModal';
 import toast from 'react-hot-toast';
 import courseService from '../../services/courseService';
 import QuizBuilderModal from './QuizBuilderModal';
+import AssessmentBuilderModal from './AssessmentBuilderModal';
 
 const AdminCourses = () => {
   const [courses, setCourses] = useState([]);
@@ -23,6 +26,9 @@ const AdminCourses = () => {
 
   // Quiz Builder state
   const [activeQuizTopic, setActiveQuizTopic] = useState(null);
+  const [selectorType, setSelectorType] = useState(null);
+  const [selectorTopicId, setSelectorTopicId] = useState(null);
+  const [showAssessmentBuilder, setShowAssessmentBuilder] = useState(false);
 
   useEffect(() => {
     fetchCourses();
@@ -69,6 +75,76 @@ const AdminCourses = () => {
         console.error('Failed to delete course', error);
         toast.error('Failed to delete course');
       }
+    }
+  };
+
+  
+  const handleDragEnd = async (result) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    if (source.droppableId === destination.droppableId && source.index !== destination.index) {
+      const topicId = source.droppableId.split('-')[1];
+      const isReel = source.droppableId.startsWith('reels-');
+      
+      const module = selectedCourse.modules.find(m => m.topics?.some(t => t.id === topicId));
+      if (!module) return;
+      const topic = module.topics.find(t => t.id === topicId);
+      
+      if (isReel) {
+        const newReels = Array.from(topic.reels || []);
+        const [removed] = newReels.splice(source.index, 1);
+        newReels.splice(destination.index, 0, removed);
+        const reelIds = newReels.map(r => r.reelId);
+        
+        // Optimistic update
+        topic.reels = newReels;
+        setSelectedCourse({...selectedCourse});
+
+        try {
+          await courseService.reorderTopicReels(topicId, reelIds);
+          handleSelectCourse(selectedCourse);
+        } catch(e) { toast.error('Failed to reorder reels'); }
+      } else {
+        const newVideos = Array.from(topic.videos || []);
+        const [removed] = newVideos.splice(source.index, 1);
+        newVideos.splice(destination.index, 0, removed);
+        const videoIds = newVideos.map(v => v.videoId);
+        
+        // Optimistic update
+        topic.videos = newVideos;
+        setSelectedCourse({...selectedCourse});
+
+        try {
+          await courseService.reorderTopicVideos(topicId, videoIds);
+          handleSelectCourse(selectedCourse);
+        } catch(e) { toast.error('Failed to reorder videos'); }
+      }
+    }
+  };
+
+  const handleAttachContent = async (contentId) => {
+    if (!selectorTopicId || !selectorType) return;
+    try {
+      if (selectorType === 'REEL') {
+        const topic = selectedCourse.modules.flatMap(m => m.topics).find(t => t.id === selectorTopicId);
+        await courseService.addTopicReel(selectorTopicId, {
+          reelId: contentId,
+          reelOrder: (topic.reels?.length || 0) + 1
+        });
+        toast.success('Reel attached');
+      } else {
+        const topic = selectedCourse.modules.flatMap(m => m.topics).find(t => t.id === selectorTopicId);
+        await courseService.addTopicVideo(selectorTopicId, {
+          videoId: contentId,
+          videoOrder: (topic.videos?.length || 0) + 1
+        });
+        toast.success('Video attached');
+      }
+      setSelectorType(null);
+      setSelectorTopicId(null);
+      handleSelectCourse(selectedCourse);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to attach content');
     }
   };
 
@@ -315,7 +391,7 @@ const AdminCourses = () => {
                                 </button>
                               </div>
                               
-                              {/* Quick Learning Path (Reels) */}
+                                {/* Quick Learning Path (Reels) */}
                               <div className="w-full mt-3 bg-gray-50 p-3 rounded border border-gray-200">
                                 <h5 className="text-xs font-bold text-gray-700 mb-2">Quick Learning Path (Reels)</h5>
                                 
@@ -359,10 +435,58 @@ const AdminCourses = () => {
                                   } finally {
                                     setLoading(false);
                                   }
-                                }} className="flex gap-2">
+                                }} className="flex gap-2 mb-4">
                                   <input type="text" name="reelId" placeholder="Reel UUID" required className="flex-1 border rounded px-2 py-1 text-xs" />
                                   <button type="submit" disabled={loading} className="bg-purple-600 text-white px-2 py-1 rounded text-xs hover:bg-purple-700 disabled:opacity-50">
                                     Attach Reel
+                                  </button>
+                                </form>
+
+                                <h5 className="text-xs font-bold text-gray-700 mb-2 border-t pt-2">Deep Learning Path (Videos)</h5>
+                                {topic.videos?.length > 0 ? (
+                                  <ul className="space-y-1 mb-3">
+                                    {topic.videos.map(video => (
+                                      <li key={video.id} className="flex justify-between items-center text-xs bg-white p-1 border rounded">
+                                        <span className="truncate flex-1 mr-2">{video.videoOrder}. {video.title}</span>
+                                        <button 
+                                          onClick={async () => {
+                                            try {
+                                              await courseService.deleteTopicVideo(topic.id, video.videoId);
+                                              handleSelectCourse(selectedCourse);
+                                            } catch (e) { toast.error('Failed to remove video'); }
+                                          }}
+                                          className="text-red-400 hover:text-red-600 font-bold px-1"
+                                        >
+                                          x
+                                        </button>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-xs text-gray-500 italic mb-2">No videos attached yet.</p>
+                                )}
+
+                                <form onSubmit={async (e) => {
+                                  e.preventDefault();
+                                  const videoId = e.target.videoId.value;
+                                  if (!videoId) return;
+                                  setLoading(true);
+                                  try {
+                                    await courseService.addTopicVideo(topic.id, {
+                                      videoId,
+                                      videoOrder: (topic.videos?.length || 0) + 1
+                                    });
+                                    e.target.reset();
+                                    handleSelectCourse(selectedCourse);
+                                  } catch (err) {
+                                    toast.error('Failed to attach video');
+                                  } finally {
+                                    setLoading(false);
+                                  }
+                                }} className="flex gap-2">
+                                  <input type="text" name="videoId" placeholder="Video UUID" required className="flex-1 border rounded px-2 py-1 text-xs" />
+                                  <button type="submit" disabled={loading} className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 disabled:opacity-50">
+                                    Attach Video
                                   </button>
                                 </form>
                               </div>
@@ -408,6 +532,22 @@ const AdminCourses = () => {
                   <li className="text-gray-500 text-sm italic">No modules added yet.</li>
                 )}
               </ul>
+
+              {/* Final Assessment Builder Block */}
+              <div className="mt-8 border-t border-gray-200 pt-6">
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100 flex items-center justify-between">
+                  <div>
+                    <h4 className="text-lg font-bold text-indigo-900 mb-1">Final Course Assessment</h4>
+                    <p className="text-sm text-indigo-700">Configure the final exam required for course certification.</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowAssessmentBuilder(true)}
+                    className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-indigo-700 shadow-sm transition-colors"
+                  >
+                    Manage Assessment
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg h-full flex items-center justify-center text-gray-500 min-h-[300px]">
@@ -424,6 +564,32 @@ const AdminCourses = () => {
             setActiveQuizTopic(null);
             handleSelectCourse(selectedCourse);
           }} 
+        />
+      )}
+
+      
+      {selectorType && selectorTopicId && (
+        <ContentSelectorModal
+          type={selectorType}
+          existingIds={
+            selectorType === 'REEL' 
+              ? selectedCourse.modules.flatMap(m => m.topics).find(t => t.id === selectorTopicId)?.reels?.map(r => r.reelId) || []
+              : selectedCourse.modules.flatMap(m => m.topics).find(t => t.id === selectorTopicId)?.videos?.map(v => v.videoId) || []
+          }
+          onSelect={handleAttachContent}
+          onClose={() => {
+            setSelectorType(null);
+            setSelectorTopicId(null);
+          }}
+        />
+      )}
+
+      {showAssessmentBuilder && (
+        <AssessmentBuilderModal
+          course={selectedCourse}
+          onClose={() => {
+            setShowAssessmentBuilder(false);
+          }}
         />
       )}
     </div>

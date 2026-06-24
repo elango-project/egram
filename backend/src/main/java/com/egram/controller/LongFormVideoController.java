@@ -60,6 +60,12 @@ public class LongFormVideoController {
         return ResponseEntity.ok(videoService.getFeed(page, size));
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<LongFormVideoResponse>> searchVideos(@RequestParam String query) {
+        return ResponseEntity.ok(videoService.searchVideos(query));
+    }
+
     @GetMapping("/continue-watching")
     @PreAuthorize("hasAuthority('ROLE_STUDENT')")
     public ResponseEntity<List<LongFormVideoResponse>> getContinueWatching() {

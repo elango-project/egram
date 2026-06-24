@@ -42,6 +42,16 @@ const courseService = {
     return response.data;
   },
 
+  updateVideoProgress: async (topicId, data) => {
+    const response = await axiosInstance.post(`/courses/topics/${topicId}/progress/video`, data);
+    return response.data;
+  },
+
+  getCertificateEligibility: async (courseId) => {
+    const response = await axiosInstance.get(`/courses/${courseId}/certificate-eligibility`);
+    return response.data;
+  },
+
   enrollCourse: async (id) => {
     const response = await axiosInstance.post(`/courses/${id}/enroll`);
     return response.data;
@@ -95,6 +105,88 @@ const courseService = {
 
   deleteTopicReel: async (topicId, reelId) => {
     const response = await axiosInstance.delete(`/courses/topics/${topicId}/reels/${reelId}`);
+    return response.data;
+  },
+
+  reorderTopicReels: async (topicId, reelIds) => {
+    const response = await axiosInstance.put(`/courses/topics/${topicId}/reels/reorder`, reelIds);
+    return response.data;
+  },
+
+  addTopicVideo: async (topicId, data) => {
+    const response = await axiosInstance.post(`/courses/topics/${topicId}/videos`, data);
+    return response.data;
+  },
+
+  deleteTopicVideo: async (topicId, videoId) => {
+    const response = await axiosInstance.delete(`/courses/topics/${topicId}/videos/${videoId}`);
+    return response.data;
+  },
+
+  reorderTopicVideos: async (topicId, videoIds) => {
+    const response = await axiosInstance.put(`/courses/topics/${topicId}/videos/reorder`, videoIds);
+    return response.data;
+  },
+
+  // Content Search APIs
+  searchReals: async (query) => {
+    const response = await axiosInstance.get(`/reals/search?query=${encodeURIComponent(query)}`);
+    return response.data;
+  },
+
+  searchVideos: async (query) => {
+    const response = await axiosInstance.get(`/videos/search?query=${encodeURIComponent(query)}`);
+    return response.data;
+  },
+
+  // Assessment & Certificate APIs
+  getAssessment: async (courseId) => {
+    const response = await axiosInstance.get(`/courses/${courseId}/assessment`);
+    return response.data;
+  },
+
+  createAssessment: async (courseId, data) => {
+    const response = await axiosInstance.post(`/courses/${courseId}/assessment`, data);
+    return response.data;
+  },
+
+  updateAssessment: async (courseId, data) => {
+    const response = await axiosInstance.put(`/courses/${courseId}/assessment`, data);
+    return response.data;
+  },
+
+  deleteAssessment: async (courseId) => {
+    const response = await axiosInstance.delete(`/courses/${courseId}/assessment`);
+    return response.data;
+  },
+
+  getAssessmentQuestions: async (courseId) => {
+    const response = await axiosInstance.get(`/courses/${courseId}/assessment/questions`);
+    return response.data;
+  },
+
+  submitAssessment: async (courseId, data) => {
+    const response = await axiosInstance.post(`/courses/${courseId}/assessment/submit`, data);
+    return response.data;
+  },
+
+  getAssessmentAttempts: async (courseId) => {
+    const response = await axiosInstance.get(`/courses/${courseId}/assessment/attempts`);
+    return response.data;
+  },
+
+  verifyCertificate: async (code) => {
+    const response = await axiosInstance.get(`/certificates/verify/${code}`);
+    return response.data;
+  },
+
+  getCertificate: async (id) => {
+    const response = await axiosInstance.get(`/certificates/${id}`);
+    return response.data;
+  },
+
+  getMyCertificates: async () => {
+    const response = await axiosInstance.get('/certificates/my-certificates');
     return response.data;
   }
 };

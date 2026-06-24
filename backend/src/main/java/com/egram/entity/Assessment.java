@@ -48,6 +48,18 @@ public class Assessment {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "max_attempts", nullable = false)
+    @Builder.Default
+    private Integer maxAttempts = 3;
+
+    @Column(name = "active", nullable = false)
+    @Builder.Default
+    private Boolean active = true;
+
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<AssessmentQuestion> questions = new java.util.ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

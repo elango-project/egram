@@ -47,6 +47,12 @@ public class RealController {
         return ResponseEntity.ok(realService.getAllReals(page, size));
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<RealResponse>> searchReals(@RequestParam String query) {
+        return ResponseEntity.ok(realService.searchReals(query));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<RealResponse> getRealById(@PathVariable UUID id) {

@@ -22,6 +22,7 @@ public class AssessmentAttemptResponse {
     private int wrongAnswers;
     private int percentage;
     private boolean passed;
+    private int attemptNumber;
     private String questionOrder;
     private LocalDateTime startedAt;
     private LocalDateTime submittedAt;

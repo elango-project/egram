@@ -46,6 +46,20 @@ export default function TopicView() {
     }
   };
 
+  const simulateWatchVideo = async (videoId) => {
+    try {
+      toast.loading('Watching video...', { id: 'watchVideo' });
+      const newProgress = await courseService.updateVideoProgress(topicId, {
+        videoId,
+        watchPercentage: 100
+      });
+      setProgress(newProgress);
+      toast.success('Video marked as watched!', { id: 'watchVideo' });
+    } catch (err) {
+      toast.error('Failed to update progress', { id: 'watchVideo' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
@@ -139,20 +153,49 @@ export default function TopicView() {
         </div>
 
         {/* Deep Learning Path */}
-        <div className="opacity-50 grayscale pointer-events-none">
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
-            <span className="bg-gray-400 w-2 h-6 rounded-full inline-block"></span>
-            Deep Learning Path (Coming Soon)
-          </h2>
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 flex items-center gap-4">
-             <div className="w-16 h-12 bg-gray-200 rounded flex items-center justify-center">
-               <FileText className="text-gray-400" />
-             </div>
-             <div>
-               <h4 className="font-semibold text-gray-600">Full Video Lesson</h4>
-               <p className="text-sm text-gray-400">Available in a future update</p>
-             </div>
+        <div>
+          <div className="flex justify-between items-end mb-4 border-b pb-2 mt-8">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <span className="bg-gradient-to-r from-blue-500 to-indigo-500 w-2 h-6 rounded-full inline-block"></span>
+              Deep Learning Path (Videos)
+            </h2>
+            {progress?.videoCompleted && <span className="text-green-600 font-bold flex items-center gap-1 text-sm"><CheckCircle size={16}/> Path Completed</span>}
           </div>
+          
+          {topic.videos && topic.videos.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {topic.videos.map((video) => (
+                <div key={video.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden group">
+                  <div className="relative aspect-video bg-gray-900 w-full cursor-pointer" onClick={() => simulateWatchVideo(video.videoId)}>
+                    {video.thumbnailUrl ? (
+                      <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                        <Video size={48} className="text-gray-600" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 group-hover:bg-black/20 transition-colors">
+                      <Play size={32} className="text-white mb-2" />
+                      <span className="text-white text-xs font-semibold px-2 py-1 bg-black/50 rounded">Click to simulate watch</span>
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">{video.title}</h3>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 flex items-center gap-4">
+               <div className="w-16 h-12 bg-gray-200 rounded flex items-center justify-center">
+                 <FileText className="text-gray-400" />
+               </div>
+               <div>
+                 <h4 className="font-semibold text-gray-600">Full Video Lesson</h4>
+                 <p className="text-sm text-gray-400">Not attached yet.</p>
+               </div>
+            </div>
+          )}
         </div>
 
         {/* Quiz Section */}

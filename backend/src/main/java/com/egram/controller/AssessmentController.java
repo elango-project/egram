@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/assessments")
+@RequestMapping("/courses/{courseId}/assessment")
 @RequiredArgsConstructor
 public class AssessmentController {
 
@@ -22,80 +22,59 @@ public class AssessmentController {
     // --- Admin Endpoints ---
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<AssessmentResponse> createAssessment(@Valid @RequestBody AssessmentRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(assessmentService.createAssessment(request));
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<AssessmentResponse> updateAssessment(
-            @PathVariable UUID id,
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AssessmentResponse> createAssessment(
+            @PathVariable UUID courseId,
             @Valid @RequestBody AssessmentRequest request) {
-        return ResponseEntity.ok(assessmentService.updateAssessment(id, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(assessmentService.createAssessment(courseId, request));
     }
 
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<Void> deleteAssessment(@PathVariable UUID id) {
-        assessmentService.deleteAssessment(id);
+    @PutMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AssessmentResponse> updateAssessment(
+            @PathVariable UUID courseId,
+            @Valid @RequestBody AssessmentRequest request) {
+        return ResponseEntity.ok(assessmentService.updateAssessment(courseId, request));
+    }
+
+    @DeleteMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteAssessment(@PathVariable UUID courseId) {
+        assessmentService.deleteAssessment(courseId);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{id}/questions")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<AssessmentQuestionResponse> addQuestion(
-            @PathVariable UUID id,
-            @Valid @RequestBody AssessmentQuestionRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(assessmentService.addQuestion(id, request));
+    @PatchMapping("/attempts/reset/{studentId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> resetAttempts(
+            @PathVariable UUID courseId,
+            @PathVariable UUID studentId) {
+        AssessmentResponse assessment = assessmentService.getAssessmentByCourseId(courseId);
+        assessmentService.resetAttempts(assessment.getId(), studentId);
+        return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/questions/{questionId}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<Void> removeQuestion(@PathVariable UUID questionId) {
-        assessmentService.removeQuestion(questionId);
-        return ResponseEntity.noContent().build();
-    }
-
-    // --- Authenticated / Shared Endpoints ---
+    // --- Student/Common Endpoints ---
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<AssessmentResponse>> getAssessments() {
-        return ResponseEntity.ok(assessmentService.getAssessments());
+    public ResponseEntity<AssessmentResponse> getAssessment(@PathVariable UUID courseId) {
+        return ResponseEntity.ok(assessmentService.getAssessmentByCourseId(courseId));
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<AssessmentResponse> getAssessment(@PathVariable UUID id) {
-        return ResponseEntity.ok(assessmentService.getAssessment(id));
+    @GetMapping("/questions")
+    public ResponseEntity<List<AssessmentQuestionResponse>> getAssessmentQuestions(@PathVariable UUID courseId) {
+        return ResponseEntity.ok(assessmentService.getQuestionsForStudent(courseId));
     }
 
-    // --- Student Endpoints ---
-
-    @GetMapping("/{id}/questions")
-    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
-    public ResponseEntity<List<AssessmentQuestionResponse>> getQuestionsForStudent(@PathVariable UUID id) {
-        return ResponseEntity.ok(assessmentService.getQuestionsForStudent(id));
-    }
-
-    @PostMapping("/{id}/submit")
-    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    @PostMapping("/submit")
     public ResponseEntity<AssessmentResultResponse> submitAssessment(
-            @PathVariable UUID id,
+            @PathVariable UUID courseId,
             @Valid @RequestBody AssessmentSubmissionRequest request) {
-        return ResponseEntity.ok(assessmentService.submitAssessment(id, request));
+        return ResponseEntity.ok(assessmentService.submitAssessment(courseId, request));
     }
 
-    @GetMapping("/{id}/history")
-    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
-    public ResponseEntity<List<AssessmentAttemptResponse>> getAttemptHistory(@PathVariable UUID id) {
-        return ResponseEntity.ok(assessmentService.getAttemptHistory(id));
-    }
-
-    @GetMapping("/{id}/analytics")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<AssessmentAnalyticsResponse> getAnalytics(@PathVariable UUID id) {
-        return ResponseEntity.ok(assessmentService.getAnalytics(id));
+    @GetMapping("/attempts")
+    public ResponseEntity<List<AssessmentAttemptResponse>> getMyAttempts(@PathVariable UUID courseId) {
+        return ResponseEntity.ok(assessmentService.getMyAttempts(courseId));
     }
 }

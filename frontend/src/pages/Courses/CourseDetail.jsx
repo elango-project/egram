@@ -22,6 +22,19 @@ export default function CourseDetail() {
     onError: (err) => toast.error(`Enrollment failed: ${err.message}`),
   })
 
+  const { data: certData } = useQuery({
+    queryKey: ['certificateEligibility', id],
+    queryFn: () => courseService.getCertificateEligibility(id),
+    enabled: !!data?.data?.data
+  })
+
+  const { data: assessmentData, isError: assessmentError } = useQuery({
+    queryKey: ['assessment', id],
+    queryFn: () => courseService.getAssessment(id),
+    enabled: !!data?.data?.data,
+    retry: false
+  })
+
   const course = data?.data?.data
   if (isLoading) return <div className="text-center py-20"><Loader2 className="animate-spin mx-auto" size={32} /></div>
   if (!course) return <div className="text-center py-20 text-[var(--text-muted)]">Course not found</div>
@@ -56,6 +69,18 @@ export default function CourseDetail() {
           </button>
         </div>
       </div>
+
+      {certData?.eligible && (
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl p-6 mb-6 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold flex items-center gap-2"><Sparkles size={20} /> Course Completed!</h2>
+            <p className="text-sm text-green-50">You have successfully completed all topics in this course. You are eligible for a certificate.</p>
+          </div>
+          <a href={`/courses/${id}/certificate`} className="bg-white text-green-700 px-5 py-2 rounded-lg font-bold hover:bg-green-50 transition-colors text-center shadow-sm whitespace-nowrap">
+            View Certificate
+          </a>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Modules list */}
@@ -133,8 +158,44 @@ export default function CourseDetail() {
           )}
         </div>
 
-        {/* AI Summary panel */}
-        <div>
+        {/* Right Panel */}
+        <div className="flex flex-col gap-6">
+          {/* Assessment panel */}
+          {!assessmentError && assessmentData && (
+            <div className="card" style={{ padding: '1.25rem' }}>
+              <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+                <CheckCircle size={18} className="text-indigo-500" /> Final Assessment
+              </h2>
+              <div className="space-y-4">
+                <p className="text-xs text-[var(--text-secondary)]">Complete all topics to unlock the final assessment. Passing the assessment grants you the course certificate.</p>
+                <div className="bg-[var(--bg-secondary)] rounded-lg p-3">
+                  <div className="flex justify-between text-xs mb-2">
+                    <span className="text-[var(--text-muted)] font-semibold">Passing Score:</span>
+                    <span className="font-bold text-gray-800">{assessmentData.passingPercentage}%</span>
+                  </div>
+                  <div className="flex justify-between text-xs mb-3">
+                    <span className="text-[var(--text-muted)] font-semibold">Max Attempts:</span>
+                    <span className="font-bold text-gray-800">{assessmentData.maxAttempts}</span>
+                  </div>
+                  <a 
+                    href={`/courses/${id}/assessment`}
+                    className={`w-full btn ${certData?.eligible ? 'btn-primary' : 'bg-gray-200 text-gray-400 cursor-not-allowed border-none'} flex justify-center py-2 text-sm font-bold`}
+                    onClick={(e) => {
+                      if (!certData?.eligible) {
+                        e.preventDefault();
+                        toast.error('Complete all topics first!');
+                      }
+                    }}
+                  >
+                    Take Assessment
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* AI Summary panel */}
+          <div>
           <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
             <Sparkles size={18} className="text-yellow-400" /> AI Insights
           </h2>
@@ -174,6 +235,7 @@ export default function CourseDetail() {
               <p>Click <strong>"AI Summary"</strong> on any video to get AI-powered insights</p>
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

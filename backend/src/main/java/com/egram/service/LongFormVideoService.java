@@ -108,6 +108,15 @@ public class LongFormVideoService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public List<LongFormVideoResponse> searchVideos(String query) {
+        User currentUser = getCurrentUser();
+        List<LongFormVideo> videos = videoRepository.findByTitleContainingIgnoreCase(query);
+        return videos.stream()
+                .map(video -> mapToResponse(video, currentUser))
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public com.egram.dto.VideoProgressResponse updateProgress(UUID id, com.egram.dto.VideoProgressRequest request) {
         User student = getCurrentUser();

@@ -89,6 +89,41 @@ public class CourseController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/topics/{topicId}/reels/reorder")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> reorderTopicReels(
+            @PathVariable UUID topicId,
+            @RequestBody List<UUID> reelIds) {
+        courseService.reorderTopicReels(topicId, reelIds);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/topics/{topicId}/videos")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<TopicVideoResponse> addVideoToTopic(
+            @PathVariable UUID topicId,
+            @Valid @RequestBody TopicVideoRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(courseService.addVideoToTopic(topicId, request));
+    }
+
+    @DeleteMapping("/topics/{topicId}/videos/{videoId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> removeVideoFromTopic(
+            @PathVariable UUID topicId,
+            @PathVariable UUID videoId) {
+        courseService.removeVideoFromTopic(topicId, videoId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/topics/{topicId}/videos/reorder")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> reorderTopicVideos(
+            @PathVariable UUID topicId,
+            @RequestBody List<UUID> videoIds) {
+        courseService.reorderTopicVideos(topicId, videoIds);
+        return ResponseEntity.ok().build();
+    }
+
     // --- Authenticated / Shared Endpoints ---
 
     @GetMapping
@@ -147,6 +182,21 @@ public class CourseController {
             @PathVariable UUID topicId,
             @Valid @RequestBody ReelProgressRequest request) {
         return ResponseEntity.ok(courseService.updateReelProgress(topicId, request));
+    }
+
+    @PostMapping("/topics/{topicId}/progress/video")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    public ResponseEntity<TopicProgressResponse> updateVideoProgress(
+            @PathVariable UUID topicId,
+            @Valid @RequestBody TopicVideoProgressRequest request) {
+        return ResponseEntity.ok(courseService.updateVideoProgress(topicId, request));
+    }
+
+    @GetMapping("/{courseId}/certificate-eligibility")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    public ResponseEntity<CertificateEligibilityResponse> getCertificateEligibility(
+            @PathVariable UUID courseId) {
+        return ResponseEntity.ok(courseService.getCertificateEligibility(courseId));
     }
 
     // --- Student Endpoints ---

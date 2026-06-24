@@ -24,4 +24,5 @@ public class TopicResponse {
     private Boolean hasAssessment;
 
     private java.util.List<TopicReelResponse> reels;
+    private java.util.List<TopicVideoResponse> videos;
 }

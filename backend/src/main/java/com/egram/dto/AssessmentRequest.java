@@ -22,14 +22,16 @@ public class AssessmentRequest {
 
     private String description;
 
-    @NotNull(message = "Duration is required")
-    @Min(value = 1, message = "Duration must be greater than 0")
-    private Integer durationMinutes;
-
     @NotNull(message = "Passing percentage is required")
     @Min(value = 0, message = "Passing percentage cannot be less than 0")
     @Max(value = 100, message = "Passing percentage cannot be more than 100")
     private Integer passingPercentage;
 
-    private UUID courseId; // Optional link to a course
+    @NotNull(message = "Max attempts is required")
+    @Min(value = 1, message = "Max attempts must be at least 1")
+    private Integer maxAttempts;
+
+    private Boolean active;
+
+    private java.util.List<AssessmentQuestionRequest> questions;
 }

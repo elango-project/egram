@@ -31,6 +31,9 @@ public class CourseService {
     private final TopicQuizRepository topicQuizRepository;
     private final TopicQuestionRepository topicQuestionRepository;
     private final TopicQuizAttemptRepository topicQuizAttemptRepository;
+    private final TopicVideoRepository topicVideoRepository;
+    private final TopicVideoProgressRepository topicVideoProgressRepository;
+    private final LongFormVideoRepository longFormVideoRepository;
 
     private User getCurrentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -191,6 +194,18 @@ public class CourseService {
         topicReelRepository.delete(topicReel);
     }
 
+    @Transactional
+    public void reorderTopicReels(UUID topicId, List<UUID> reelIds) {
+        List<TopicReel> existingReels = topicReelRepository.findByTopicIdOrderByReelOrder(topicId);
+        for (TopicReel tr : existingReels) {
+            int newOrder = reelIds.indexOf(tr.getReel().getId());
+            if (newOrder != -1) {
+                tr.setReelOrder(newOrder);
+                topicReelRepository.save(tr);
+            }
+        }
+    }
+
     // --- Authenticated / Shared ---
 
     @Transactional(readOnly = true)
@@ -209,6 +224,17 @@ public class CourseService {
                         .build())
                 .collect(Collectors.toList()) : new java.util.ArrayList<>();
 
+        List<TopicVideoResponse> videoResponses = t.getTopicVideos() != null ? t.getTopicVideos().stream()
+                .sorted(java.util.Comparator.comparingInt(TopicVideo::getVideoOrder))
+                .map(tv -> TopicVideoResponse.builder()
+                        .id(tv.getId())
+                        .videoId(tv.getVideo().getId())
+                        .title(tv.getVideo().getTitle())
+                        .thumbnailUrl(tv.getVideo().getThumbnailUrl())
+                        .videoOrder(tv.getVideoOrder())
+                        .build())
+                .collect(Collectors.toList()) : new java.util.ArrayList<>();
+
         return TopicResponse.builder()
             .id(t.getId())
             .title(t.getTitle())
@@ -220,6 +246,7 @@ public class CourseService {
             .hasQuiz(t.getHasQuiz())
             .hasAssessment(t.getHasAssessment())
             .reels(reelResponses)
+            .videos(videoResponses)
             .build();
     }
 
@@ -422,6 +449,131 @@ public class CourseService {
         return mapTopicProgressToResponse(tp);
     }
 
+    // --- Video (Deep Learning Path) APIs ---
+
+    @Transactional
+    public TopicVideoResponse addVideoToTopic(UUID topicId, TopicVideoRequest request) {
+        Topic topic = topicRepository.findById(topicId)
+                .orElseThrow(() -> new EgramException("Topic not found", HttpStatus.NOT_FOUND));
+
+        LongFormVideo video = longFormVideoRepository.findById(request.getVideoId())
+                .orElseThrow(() -> new EgramException("Video not found", HttpStatus.NOT_FOUND));
+
+        if (topicVideoRepository.findByTopicIdAndVideoId(topicId, video.getId()).isPresent()) {
+            throw new EgramException("Video is already attached to this topic", HttpStatus.BAD_REQUEST);
+        }
+
+        TopicVideo topicVideo = TopicVideo.builder()
+                .topic(topic)
+                .video(video)
+                .videoOrder(request.getVideoOrder())
+                .build();
+
+        topicVideo = topicVideoRepository.save(topicVideo);
+
+        topic.setHasDeepLearningPath(true);
+        topicRepository.save(topic);
+
+        return TopicVideoResponse.builder()
+                .id(topicVideo.getId())
+                .videoId(video.getId())
+                .videoOrder(topicVideo.getVideoOrder())
+                .title(video.getTitle())
+                .thumbnailUrl(video.getThumbnailUrl())
+                .build();
+    }
+
+    @Transactional
+    public void removeVideoFromTopic(UUID topicId, UUID videoId) {
+        TopicVideo topicVideo = topicVideoRepository.findByTopicIdAndVideoId(topicId, videoId)
+                .orElseThrow(() -> new EgramException("Video not attached to this topic", HttpStatus.NOT_FOUND));
+        topicVideoRepository.delete(topicVideo);
+
+        // Update topic flag
+        Topic topic = topicRepository.findById(topicId).orElseThrow();
+        boolean hasVideos = topicVideoRepository.count() > 0;
+        topic.setHasDeepLearningPath(hasVideos);
+        topicRepository.save(topic);
+    }
+
+    @Transactional
+    public void reorderTopicVideos(UUID topicId, List<UUID> videoIds) {
+        List<TopicVideo> existingVideos = topicVideoRepository.findByTopicIdOrderByVideoOrder(topicId);
+        for (TopicVideo tv : existingVideos) {
+            int newOrder = videoIds.indexOf(tv.getVideo().getId());
+            if (newOrder != -1) {
+                tv.setVideoOrder(newOrder);
+                topicVideoRepository.save(tv);
+            }
+        }
+    }
+
+    @Transactional
+    public TopicProgressResponse updateVideoProgress(UUID topicId, TopicVideoProgressRequest request) {
+        User student = getCurrentUser();
+        Topic topic = topicRepository.findById(topicId)
+                .orElseThrow(() -> new EgramException("Topic not found", HttpStatus.NOT_FOUND));
+        LongFormVideo video = longFormVideoRepository.findById(request.getVideoId())
+                .orElseThrow(() -> new EgramException("Video not found", HttpStatus.NOT_FOUND));
+
+        TopicVideoProgress tvp = topicVideoProgressRepository.findByTopicIdAndVideoIdAndStudentId(topicId, video.getId(), student.getId())
+                .orElse(TopicVideoProgress.builder()
+                        .student(student)
+                        .topic(topic)
+                        .video(video)
+                        .build());
+
+        tvp.setWatchPercentage(Math.max(tvp.getWatchPercentage(), request.getWatchPercentage()));
+        
+        if (tvp.getWatchPercentage() >= 90 && !tvp.getCompleted()) {
+            tvp.setCompleted(true);
+            tvp.setCompletedAt(java.time.LocalDateTime.now());
+        }
+        topicVideoProgressRepository.save(tvp);
+
+        TopicProgress tp = topicProgressRepository.findByTopicIdAndStudentId(topicId, student.getId())
+                .orElse(createInitialTopicProgress(topicId, student));
+
+        // Check if all videos are completed
+        List<TopicVideo> allVideos = topicVideoRepository.findByTopicIdOrderByVideoOrder(topicId);
+        List<TopicVideoProgress> completedVideos = topicVideoProgressRepository.findByTopicIdAndStudentId(topicId, student.getId())
+                .stream().filter(TopicVideoProgress::getCompleted).toList();
+
+        if (allVideos.size() > 0 && completedVideos.size() >= allVideos.size()) {
+            tp.setVideoCompleted(true);
+            tp.setQuizUnlocked(true);
+            topicProgressRepository.save(tp);
+            checkTopicCompletion(tp);
+        }
+
+        return mapTopicProgressToResponse(tp);
+    }
+
+    // --- Certificate Eligibility ---
+
+    @Transactional(readOnly = true)
+    public CertificateEligibilityResponse getCertificateEligibility(UUID courseId) {
+        User student = getCurrentUser();
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new EgramException("Course not found", HttpStatus.NOT_FOUND));
+        
+        List<TopicProgress> topicProgressList = topicProgressRepository.findByTopicModuleCourseIdAndStudentId(courseId, student.getId());
+        long completedTopics = topicProgressList.stream().filter(TopicProgress::getTopicCompleted).count();
+        long totalTopics = course.getModules().stream().flatMap(m -> m.getTopics().stream()).count();
+        
+        int percentage = totalTopics > 0 ? (int) Math.round(((double) completedTopics / totalTopics) * 100) : 0;
+        boolean eligible = (totalTopics > 0) && (completedTopics == totalTopics);
+
+        return CertificateEligibilityResponse.builder()
+                .courseId(courseId)
+                .studentId(student.getId())
+                .eligible(eligible)
+                .completedTopics(completedTopics)
+                .totalTopics(totalTopics)
+                .progressPercentage(percentage)
+                .build();
+    }
+
     @Transactional
     public QuizAttemptResponse submitQuiz(UUID topicId, QuizSubmitRequest request) {
         User student = getCurrentUser();
@@ -554,6 +706,17 @@ public class CourseService {
                                                 .build())
                                         .collect(Collectors.toList()) : new java.util.ArrayList<>();
 
+                                List<TopicVideoResponse> videoResponses = t.getTopicVideos() != null ? t.getTopicVideos().stream()
+                                        .sorted(java.util.Comparator.comparingInt(TopicVideo::getVideoOrder))
+                                        .map(tv -> TopicVideoResponse.builder()
+                                                .id(tv.getId())
+                                                .videoId(tv.getVideo().getId())
+                                                .title(tv.getVideo().getTitle())
+                                                .thumbnailUrl(tv.getVideo().getThumbnailUrl())
+                                                .videoOrder(tv.getVideoOrder())
+                                                .build())
+                                        .collect(Collectors.toList()) : new java.util.ArrayList<>();
+
                                 return TopicResponse.builder()
                                     .id(t.getId())
                                     .title(t.getTitle())
@@ -565,6 +728,7 @@ public class CourseService {
                                     .hasQuiz(t.getHasQuiz())
                                     .hasAssessment(t.getHasAssessment())
                                     .reels(reelResponses)
+                                    .videos(videoResponses)
                                     .build();
                             })
                             .collect(Collectors.toList()) : new java.util.ArrayList<>();

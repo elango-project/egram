@@ -57,6 +57,10 @@ public class AssessmentAttempt {
     @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt;
 
+    @Column(name = "attempt_number", nullable = false)
+    @Builder.Default
+    private Integer attemptNumber = 1;
+
     @PrePersist
     protected void onCreate() {
         if (startedAt == null) startedAt = LocalDateTime.now();
