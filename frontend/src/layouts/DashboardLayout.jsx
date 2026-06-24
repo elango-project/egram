@@ -22,7 +22,6 @@ const DashboardLayout = () => {
     { name: 'Reels', path: '/dashboard/reals', icon: Film },
     { name: 'Videos', path: '/dashboard/videos', icon: Video },
     { name: 'Courses', path: '/dashboard/courses', icon: BookOpen },
-    { name: 'Assessments', path: '/dashboard/assessments', icon: FileText },
     { name: 'Jobs', path: '/dashboard/jobs', icon: Briefcase },
     { name: 'Internships', path: '/dashboard/internships', icon: UserPlus }
   ] : [
@@ -30,7 +29,6 @@ const DashboardLayout = () => {
     { name: 'Reels', path: '/dashboard/reals', icon: Film },
     { name: 'Videos', path: '/dashboard/videos', icon: Video },
     { name: 'Courses', path: '/dashboard/courses', icon: BookOpen },
-    { name: 'Assessments', path: '/dashboard/assessments', icon: FileText },
     { name: 'Jobs', path: '/dashboard/jobs', icon: Briefcase },
     { name: 'Internships', path: '/dashboard/internships', icon: UserPlus },
     { name: 'Placement', path: '/dashboard/placement', icon: Target }

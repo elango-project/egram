@@ -655,7 +655,8 @@ public class CourseService {
     }
 
     private void checkTopicCompletion(TopicProgress tp) {
-        if (!tp.getTopicCompleted() && (tp.getReelsCompleted() || tp.getVideoCompleted()) && tp.getQuizCompleted()) {
+        boolean quizConditionMet = tp.getTopic().getHasQuiz() ? tp.getQuizCompleted() : true;
+        if (!tp.getTopicCompleted() && (tp.getReelsCompleted() || tp.getVideoCompleted()) && quizConditionMet) {
             tp.setTopicCompleted(true);
             tp.setCompletedAt(java.time.LocalDateTime.now());
             topicProgressRepository.save(tp);

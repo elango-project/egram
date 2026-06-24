@@ -10,20 +10,19 @@ import PageLoader from '../components/ui/PageLoader';
 const Home = lazy(() => import('../pages/Home'));
 const Login = lazy(() => import('../pages/Login'));
 const Register = lazy(() => import('../pages/Register'));
-const Dashboard = lazy(() => import('../pages/Dashboard'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 const RealsPage = lazy(() => import('../pages/Reals/RealsPage'));
 const VideosPage = lazy(() => import('../pages/Videos/VideosPage'));
 const VideoPlayerView = lazy(() => import('../pages/Videos/VideoPlayerView'));
+const Dashboard = lazy(() => import('../pages/Dashboard/Dashboard'));
 const CoursesPage = lazy(() => import('../pages/Courses/CoursesPage'));
 const CourseDetail = lazy(() => import('../pages/Courses/CourseDetail'));
-const TopicView = lazy(() => import('../pages/Courses/TopicView'));
 const AssessmentPage = lazy(() => import('../pages/Courses/AssessmentPage'));
+const TopicView = lazy(() => import('../pages/Courses/TopicView'));
 const CertificatePage = lazy(() => import('../pages/Courses/CertificatePage'));
-const AssessmentsPage = lazy(() => import('../pages/Assessments/AssessmentsPage'));
+const PlacementDashboard = lazy(() => import('../pages/PlacementDashboard'));
 const JobsPage = lazy(() => import('../pages/Jobs/JobsPage'));
 const InternshipsPage = lazy(() => import('../pages/Jobs/InternshipsPage'));
-const PlacementDashboard = lazy(() => import('../pages/PlacementDashboard'));
 
 const AppRouter = () => {
   return (
@@ -46,7 +45,6 @@ const AppRouter = () => {
             <Route path="/dashboard/videos" element={<VideosPage />} />
             <Route path="/dashboard/videos/:id" element={<VideoPlayerView />} />
             <Route path="/dashboard/courses" element={<CoursesPage />} />
-            <Route path="/dashboard/assessments" element={<AssessmentsPage />} />
             <Route path="/dashboard/jobs" element={<JobsPage />} />
             <Route path="/dashboard/internships" element={<InternshipsPage />} />
 
