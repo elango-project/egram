@@ -223,10 +223,18 @@ async function runTest() {
     const aQuestionId = assessQuestionsRes.data[0].id;
 
     const attemptRes = await api.post(`/courses/${state.courseId}/assessment/submit`, {
-      answers: { [aQuestionId]: "A" }
+      answers: { [aQuestionId]: "B" } // Wrong answer
     }, studentConfig);
-    assert(attemptRes.data.passed === true, 'Assessment should be passed');
-    pass('Submit Assessment');
+    assert(attemptRes.data.passed === false, 'Assessment should be failed');
+    pass('Submit Assessment (Failed Attempt)');
+
+    // 19.5. Student Retake Assessment
+    const retakeRes = await api.post(`/courses/${state.courseId}/assessment/submit`, {
+      answers: { [aQuestionId]: "A" } // Correct answer
+    }, studentConfig);
+    console.log('Retake Response:', retakeRes.data);
+    assert(retakeRes.data.passed === true, 'Retake should pass');
+    pass('Student Retake Assessment');
 
     // 20. Verify Certificate generated
     const certsRes = await api.get('/certificates/my-certificates', studentConfig);

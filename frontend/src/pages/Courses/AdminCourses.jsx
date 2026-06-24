@@ -163,7 +163,8 @@ const AdminCourses = () => {
     setLoading(true);
     try {
       await courseService.addModule(selectedCourse.id, {
-        title: moduleTitle
+        title: moduleTitle,
+        moduleOrder: (selectedCourse.modules?.length || 0) + 1
       });
       setModuleTitle('');
       // Refresh course details
