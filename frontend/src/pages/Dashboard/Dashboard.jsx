@@ -15,20 +15,18 @@ const statCards = (stats) => [
 ]
 
 const quickLinks = [
-  { to: '/mentor', icon: Brain, label: 'Ask Sarathi AI', desc: 'Career guidance & interview prep', color: '#7c3aed' },
-  { to: '/reels', icon: Play, label: 'Watch Reels', desc: 'Micro-learning in 60 seconds', color: '#06b6d4' },
-  { to: '/internships', icon: Briefcase, label: 'Find Internships', desc: 'AI-matched opportunities', color: '#3b82f6' },
-  { to: '/events', icon: CalendarDays, label: 'Explore Events', desc: 'Hackathons, symposiums & more', color: '#ec4899' },
+  { to: '/dashboard/courses', icon: BookOpen, label: 'Browse Courses', desc: 'Continue your learning journey', color: '#7c3aed' },
+  { to: '/dashboard/jobs', icon: Briefcase, label: 'Explore Jobs', desc: 'Find your dream job', color: '#3b82f6' },
+  { to: '/dashboard/internships', icon: Briefcase, label: 'Find Internships', desc: 'Start your career', color: '#06b6d4' },
+  { to: '/dashboard/placement', icon: Award, label: 'Placement Hub', desc: 'Track your career progress', color: '#ec4899' },
 ]
 
 export default function Dashboard() {
   const { user } = useAuthStore()
   const { data: coursesData } = useQuery({ queryKey: ['courses'], queryFn: () => courseApi.list({ page: 0, size: 4 }) })
-  const { data: eventsData } = useQuery({ queryKey: ['events'], queryFn: () => eventApi.list({ page: 0, size: 3 }) })
   const { data: statsData } = useQuery({ queryKey: ['stats'], queryFn: () => import('../../api').then(m => m.userApi.stats()), retry: false })
 
   const courses = coursesData?.data?.data?.content || []
-  const events = eventsData?.data?.data?.content || []
   const stats = statsData?.data?.data || null
 
   return (
@@ -38,14 +36,13 @@ export default function Dashboard() {
            style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.2), rgba(59,130,246,0.2))', border: '1px solid rgba(124,58,237,0.2)' }}>
         <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/5 rounded-full blur-2xl" />
         <h1 className="text-2xl font-bold mb-1">
-          Good {getTimeOfDay()}, <span className="gradient-text">{user?.firstName} 👋</span>
+          Welcome Back 👋
         </h1>
         <p className="text-[var(--text-secondary)] text-sm">
-          Continue your learning journey. Your next opportunity is just a click away.
+          Track your learning progress, course completions, placements, internships, and certificates from one place.
         </p>
         <div className="flex gap-3 mt-4">
-          <Link to="/courses" className="btn btn-primary btn-sm">Browse Courses</Link>
-          <Link to="/mentor" className="btn btn-ghost btn-sm">Talk to Sarathi AI</Link>
+          <Link to="/dashboard/courses" className="btn btn-primary btn-sm">Browse Courses</Link>
         </div>
       </div>
 
@@ -88,7 +85,7 @@ export default function Dashboard() {
         <div>
           <div className="flex-between mb-3">
             <h2 className="text-lg font-bold">Trending Courses</h2>
-            <Link to="/courses" className="text-xs text-[var(--accent-purple-light)] flex items-center gap-1">
+            <Link to="/dashboard/courses" className="text-xs text-[var(--accent-purple-light)] flex items-center gap-1">
               View all <ArrowRight size={12} />
             </Link>
           </div>
@@ -114,46 +111,13 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Upcoming Events */}
-        <div>
-          <div className="flex-between mb-3">
-            <h2 className="text-lg font-bold">Upcoming Events</h2>
-            <Link to="/events" className="text-xs text-[var(--accent-purple-light)] flex items-center gap-1">
-              View all <ArrowRight size={12} />
-            </Link>
-          </div>
-          {events.length === 0 ? (
-            <div className="card text-center py-8 text-[var(--text-muted)] text-sm">No events yet</div>
-          ) : (
-            <div className="space-y-3">
-              {events.map(event => (
-                <div key={event.id} className="card" style={{ padding: '0.875rem' }}>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex-center flex-shrink-0">
-                      <CalendarDays size={18} className="text-pink-400" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-sm">{event.title}</div>
-                      <div className="text-xs text-[var(--text-muted)] mt-0.5">{event.type?.replace('_', ' ')}</div>
-                    </div>
-                    <span className="badge badge-purple text-[10px]">{formatDate(event.startDt)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Removed Upcoming Events section */}
       </div>
     </div>
   )
 }
 
-function getTimeOfDay() {
-  const h = new Date().getHours()
-  if (h < 12) return 'morning'
-  if (h < 17) return 'afternoon'
-  return 'evening'
-}
+// Removed getTimeOfDay
 
 function formatDate(dt) {
   if (!dt) return '—'

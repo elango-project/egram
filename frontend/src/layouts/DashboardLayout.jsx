@@ -19,19 +19,15 @@ const DashboardLayout = () => {
 
   const navItems = isAdmin ? [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Reels', path: '/dashboard/reals', icon: Film },
-    { name: 'Videos', path: '/dashboard/videos', icon: Video },
     { name: 'Courses', path: '/dashboard/courses', icon: BookOpen },
     { name: 'Jobs', path: '/dashboard/jobs', icon: Briefcase },
     { name: 'Internships', path: '/dashboard/internships', icon: UserPlus }
   ] : [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Reels', path: '/dashboard/reals', icon: Film },
-    { name: 'Videos', path: '/dashboard/videos', icon: Video },
     { name: 'Courses', path: '/dashboard/courses', icon: BookOpen },
     { name: 'Jobs', path: '/dashboard/jobs', icon: Briefcase },
     { name: 'Internships', path: '/dashboard/internships', icon: UserPlus },
-    { name: 'Placement', path: '/dashboard/placement', icon: Target }
+    { name: 'Placement Hub', path: '/dashboard/placement', icon: Target }
   ];
 
   return (
