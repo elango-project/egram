@@ -109,7 +109,9 @@ export default function CourseDetail() {
                              className="flex flex-col px-4 py-3 hover:bg-[var(--bg-card-hover)] transition-colors border-b border-[var(--border)] last:border-0">
                           <div className="flex items-center gap-3">
                             <span className="text-xs font-bold text-gray-500 w-4">{tIdx + 1}.</span>
-                            <span className="text-sm font-semibold flex-1">{topic.title}</span>
+                            <a href={`/courses/topic/${topic.id}`} className="text-sm font-semibold flex-1 hover:text-purple-600 hover:underline transition-colors">
+                              {topic.title}
+                            </a>
                             <span className="text-xs text-[var(--text-muted)] bg-[var(--bg-secondary)] px-2 py-1 rounded">
                               {topic.estimatedDurationMinutes || 0} mins
                             </span>
@@ -141,6 +143,48 @@ export default function CourseDetail() {
                                   </li>
                                 ))}
                               </ul>
+                            </div>
+                          )}
+
+                          {/* Deep Learning Path (Videos) Display */}
+                          {topic.videos?.length > 0 && (
+                            <div className="mt-3 ml-7 bg-[var(--bg-card)] rounded p-3 border border-[var(--border)]">
+                              <h5 className="text-xs font-bold text-blue-400 mb-2">Deep Learning Path</h5>
+                              <ul className="space-y-2">
+                                {topic.videos.map((video) => (
+                                  <li key={video.id} className="flex flex-col md:flex-row md:items-center gap-3 bg-[var(--bg-secondary)] p-2 rounded">
+                                    {video.thumbnailUrl && (
+                                      <img src={video.thumbnailUrl} alt={video.title} className="w-16 h-9 object-cover rounded shadow-sm" />
+                                    )}
+                                    <div className="flex-1">
+                                      <span className="text-xs font-semibold">{video.videoOrder}. {video.title}</span>
+                                    </div>
+                                    <a 
+                                      href={`/courses/topic/${topic.id}`} 
+                                      className="btn btn-ghost btn-sm text-xs mt-2 md:mt-0 px-2 py-1"
+                                    >
+                                      <Play size={12} className="text-blue-400 mr-1" />
+                                      View Learning Path
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Quiz Metadata */}
+                          {topic.hasQuiz && (
+                            <div className="mt-3 ml-7 bg-[var(--bg-card)] rounded p-3 border border-[var(--border)] flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle size={16} className="text-green-500" />
+                                <span className="text-xs font-bold text-green-600">Topic Assessment Included</span>
+                              </div>
+                              <a 
+                                href={`/courses/topic/${topic.id}#quiz-section`} 
+                                className="btn btn-ghost btn-sm text-xs px-2 py-1"
+                              >
+                                Take Quiz
+                              </a>
                             </div>
                           )}
                         </div>

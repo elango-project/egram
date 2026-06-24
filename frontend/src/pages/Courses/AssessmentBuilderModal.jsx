@@ -10,6 +10,7 @@ const AssessmentBuilderModal = ({ course, onClose }) => {
   const [formData, setFormData] = useState({
     title: 'Final Course Assessment',
     description: '',
+    durationMinutes: 60,
     passingPercentage: 70,
     maxAttempts: 3,
     active: true,
@@ -28,6 +29,7 @@ const AssessmentBuilderModal = ({ course, onClose }) => {
         setFormData({
           title: data.title,
           description: data.description || '',
+          durationMinutes: data.durationMinutes || 60,
           passingPercentage: data.passingPercentage,
           maxAttempts: data.maxAttempts || 3,
           active: data.active !== false,
@@ -133,6 +135,18 @@ const AssessmentBuilderModal = ({ course, onClose }) => {
                   onChange={e => setFormData({...formData, description: e.target.value})}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
                   rows="2"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">Duration (Minutes)</label>
+                <input 
+                  type="number" 
+                  min="1"
+                  value={formData.durationMinutes}
+                  onChange={e => setFormData({...formData, durationMinutes: parseInt(e.target.value) || 60})}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+                  required
                 />
               </div>
 
