@@ -1,20 +1,44 @@
+# Node
 node_modules/
-.env
-.env.*
-application-prod.properties
-secrets/
-*.secret
+
+# Java
 target/
 *.class
 *.jar
 *.war
+
+# React
+dist/
+
+# Python
 __pycache__/
 *.pyc
 .venv/
 venv/
-dist/
-.DS_Store
-.idea/
-.vscode/
+
+# Logs
+logs/
 *.log
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Environment
+.env
+.env.local
+application-prod.properties
+secrets/
+*.secret
+!*.env.example
+!.env.example
+
+# Coverage
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
 pgdata/
